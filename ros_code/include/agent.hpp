@@ -15,16 +15,23 @@ struct Agent {
   Eigen::Vector2d goal;
   double radius;
   double anisotropy;
+  double repel_strength;
 };
 
 struct SpawnData {
   int num_agents;
-  double avoid_radius;
-  double anisotropy;
   double spawn_x_min, spawn_x_max;
   double spawn_y_min, spawn_y_max;
 };
 
+struct AgentData {
+  double avoid_radius;
+  double anisotropy;
+  double repel_strength;
+};
+
 Person agent_to_person(const Agent& agent);
 
-void spawn_agents(SpawnData& spawn_data, std::vector<Agent>& agents, PersonArray& people);
+PersonArray agents_to_people(std::vector<Agent>& agents);
+
+void spawn_agents(SpawnData& spawn_data, AgentData& agent_data, std::vector<Agent>& agents);

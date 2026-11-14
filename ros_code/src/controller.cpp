@@ -28,7 +28,7 @@ public:
       [this, print_scans] (const LaserScan & scan) {
 
         bool less_than_range = false;
-        for (int i = 0; i < scan.ranges.size(); i++) {
+        for (long unsigned int i = 0; i < scan.ranges.size(); i++) {
           double range = scan.ranges[i];
           if (range < DIST_TO_STOP) {
             less_than_range = true;

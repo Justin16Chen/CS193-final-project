@@ -30,7 +30,7 @@ def generate_launch_description():
     clock_node = Node(
         package='cs193project',
         executable='clock_reciever',
-        parameters=[{'use_sim_time': True}],
+        parameters=[{'use_sim_time': True}, {'print_clock': False}],
         output='screen',
     )
 
