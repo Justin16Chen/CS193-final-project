@@ -1,4 +1,19 @@
 #include "agent.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "visualization_msgs/msg/marker.h"
+#include "visualization_msgs/msg/marker_array.hpp"
+#include "rviz_helper.hpp"
+
+#include <memory>
+#include <algorithm>
+
+#define ABS(x) ((x) < 0 ? (-x) : (x))
+
+using Eigen::Vector2d;
+using rclcpp::Publisher;
+using visualization_msgs::msg::MarkerArray;
+using visualization_msgs::msg::Marker;
+using std::shared_ptr;
 
 Person agent_to_person(Agent& agent) {
   Person p;
@@ -54,4 +69,55 @@ void spawn_agents(SpawnData& spawn_data, AgentData &agent_data, std::vector<Agen
     }
     agents.push_back(agent);
   }
+}
+
+// takes dt in seconds
+void update_agents(AgentData data, std::vector<Agent>& agents, double dt) {
+  // calculate all accelerations
+  std::vector<Vector2d> accels(agents.size(), Vector2d::Zero());
+  for (size_t i = 0; i < agents.size(); i++) {
+    Agent& a = agents[i];
+    Vector2d agent_to_goal = a.goal - a.pos;
+    Vector2d goal_accel = Vector2d::Zero();
+    if (agent_to_goal.norm() > 0.1) {
+      goal_accel = (data.preferred_walk_speed * agent_to_goal.normalized() - a.vel) / data.relaxation_time;
+    }
+    Vector2d agent_repulsion_accel = Vector2d::Zero();
+    for (Agent& b : agents) {
+      if (a.id == b.id) {
+        continue;
+      }
+      Vector2d a_to_b = b.pos - a.pos;
+      double avoid_dist = a.radius + b.radius - a_to_b.norm();
+      double avoid_accel_mag = data.repel_strength * exp(avoid_dist / data.repel_strength_falloff);
+      double cos_angle = a.vel.normalized().dot(a_to_b.normalized());
+      double anisotrophy = data.anisotropy + (1 - data.anisotropy) * (1 + cos_angle) * 0.5;
+      agent_repulsion_accel += avoid_accel_mag * -a_to_b.normalized() * anisotrophy;
+    }
+    accels[i] = goal_accel + agent_repulsion_accel;
+  }
+
+  // update velocity and position using acceleration
+  for (size_t i = 0; i < agents.size(); i++) {
+    Agent& a = agents[i];
+    a.vel += accels[i] * dt;
+    double mag = a.vel.norm();
+    double new_mag = std::clamp(mag, -data.max_walk_speed, data.max_walk_speed);
+    if (ABS(new_mag - mag) > 0.0001) {
+      a.vel = a.vel.normalized() * new_mag;
+    }
+    a.pos += a.vel * dt;
+  }
+}
+
+void publish_agent_markers(rclcpp::Time time, std::vector<Agent>& agents, shared_ptr<Publisher<MarkerArray>> people_pub,
+                           shared_ptr<Publisher<MarkerArray>> arrow_pub) {
+  MarkerArray people_markers;
+  MarkerArray arrow_markers;
+  for (Agent a : agents) {
+    people_markers.markers.push_back(create_marker_cylinder(a.id, time, a.pos, 0.25, 1));
+    arrow_markers.markers.push_back(create_marker_arrow(a.id, time, a.pos, a.goal));
+  }
+  people_pub->publish(people_markers);
+  arrow_pub->publish(arrow_markers);
 }

@@ -1,12 +1,18 @@
 #pragma once
 
+#include "rclcpp/rclcpp.hpp"
 #include "crowd_interfaces/msg/person.hpp"
 #include "crowd_interfaces/msg/person_array.hpp"
+#include "visualization_msgs/msg/marker.h"
+#include "visualization_msgs/msg/marker_array.hpp"
 #include <cstdint>
 #include <Eigen/Dense>
 
 using crowd_interfaces::msg::Person;
 using crowd_interfaces::msg::PersonArray;
+using visualization_msgs::msg::Marker;
+using visualization_msgs::msg::MarkerArray;
+using rclcpp::Publisher;
 
 struct Agent {
   uint32_t id;
@@ -28,6 +34,10 @@ struct AgentData {
   double avoid_radius;
   double anisotropy;
   double repel_strength;
+  double repel_strength_falloff;
+  double preferred_walk_speed;
+  double max_walk_speed;
+  double relaxation_time;
 };
 
 Person agent_to_person(const Agent& agent);
@@ -35,3 +45,9 @@ Person agent_to_person(const Agent& agent);
 PersonArray agents_to_people(std::vector<Agent>& agents);
 
 void spawn_agents(SpawnData& spawn_data, AgentData& agent_data, std::vector<Agent>& agents);
+
+void update_agents(AgentData agent_data, std::vector<Agent>& agents, double dt);
+
+void publish_agent_markers(rclcpp::Time time, std::vector<Agent>& agents, 
+                           std::shared_ptr<Publisher<MarkerArray>> people_pub,
+                           std::shared_ptr<Publisher<MarkerArray>> arrow_pub);

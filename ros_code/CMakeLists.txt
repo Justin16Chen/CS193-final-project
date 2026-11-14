@@ -40,7 +40,7 @@ ament_target_dependencies(clock_reciever rclcpp rosgraph_msgs)
 add_executable(controller src/controller.cpp)
 ament_target_dependencies(controller rclcpp sensor_msgs geometry_msgs)
 
-add_executable(crowd src/crowd.cpp src/agent.cpp)
+add_executable(crowd src/crowd.cpp src/agent.cpp src/rviz_helper.cpp)
 ament_target_dependencies(crowd rclcpp crowd_interfaces visualization_msgs)
 target_link_libraries(crowd Eigen3::Eigen)
 target_include_directories(crowd PRIVATE include)

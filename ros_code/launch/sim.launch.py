@@ -44,15 +44,23 @@ def generate_launch_description():
     crowd_node = Node(
         package='cs193project',
         executable='crowd',
-        parameters=[{'num_people': 5,},
-                    {'update_frequency': 20.},
-                    {'repel_strength': 1.},
-                    {'avoid_radius': 1.5},
-                    {'anisotropy': 0.5},
-                    {'spawn_x_min': -10.},
-                    {'spawn_x_max': 10.},
-                    {'spawn_y_min': -10.},
-                    {'spawn_y_max': 10.}],
+        parameters=[
+          {'update_frequency': 20.},
+          # spawn data
+          {'num_agents': 25,},
+          {'spawn_x_min': -10.},
+          {'spawn_x_max': 10.},
+          {'spawn_y_min': -10.},
+          {'spawn_y_max': 10.},
+          # agent data
+          {'model.avoid_radius': 1.},
+          {'model.anisotropy': 0.5},
+          {'model.repel_strength': 0.5},
+          {'model.repel_strength_falloff': 0.3},
+          {'model.preferred_walk_speed': 1.3},
+          {'model.max_walk_speed': 1.6},
+          {'model.relaxation_time': 0.7},
+        ],
         output='screen'
     )
 

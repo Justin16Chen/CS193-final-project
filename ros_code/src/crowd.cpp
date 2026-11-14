@@ -2,6 +2,7 @@
 #include "crowd_interfaces/msg/person_array.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 #include "agent.hpp"
+#include "rviz_helper.hpp"
 
 #include <stdlib.h>
 #include <time.h>
@@ -25,24 +26,27 @@ public:
     double update_period_sec = 1.0 / get_parameter("update_frequency").as_double();
 
     crowd_pub_ = create_publisher<PersonArray>("people", 10);
-    marker_pub_ = create_publisher<MarkerArray>("people_markers", 10);
+    people_marker_pub_ = create_publisher<MarkerArray>("people_markers", 10);
+    arrow_marker_pub_ = create_publisher<MarkerArray>("arrow_markers", 10);
 
     SpawnData spawn_data = get_spawn_data();
     AgentData agent_data = get_agent_data();
     spawn_agents(spawn_data, agent_data, agents_);
 
     auto update_period = duration<double>(update_period_sec);
-    update_timer_ = create_wall_timer(update_period, [this, update_period] () {
+    update_timer_ = create_wall_timer(update_period, [this, agent_data, update_period_sec] () {
+      update_agents(agent_data, agents_, update_period_sec);
       PersonArray people = agents_to_people(agents_);
       crowd_pub_->publish(people);
-      publish_markers();
+      publish_agent_markers(now(), agents_, people_marker_pub_, arrow_marker_pub_);
     });
   }
 
 private:
   shared_ptr<TimerBase> update_timer_; 
   shared_ptr<Publisher<PersonArray>> crowd_pub_;
-  shared_ptr<Publisher<MarkerArray>> marker_pub_;
+  shared_ptr<Publisher<MarkerArray>> people_marker_pub_;
+  shared_ptr<Publisher<MarkerArray>> arrow_marker_pub_;
 
   std::vector<Agent> agents_;
 
@@ -67,41 +71,28 @@ private:
   }
   AgentData get_agent_data() {
     declare_parameter("model.avoid_radius", 1.5);
-    declare_parameter("model.anisotropy", 0.5);
+    declare_parameter("model.anisotropy", 0.1);
     declare_parameter("model.repel_strength", 1.);
+    declare_parameter("model.repel_strength_falloff", 0.3);
+    declare_parameter("model.preferred_walk_speed", 1.);
+    declare_parameter("model.max_walk_speed", 1.);
+    declare_parameter("model.relaxation_time", 0.5);
     double repel_strength = get_parameter("model.repel_strength").as_double();
-    double avoid_radius = get_parameter("model.avoid_radius").as_double();
+    double repel_strength_falloff = get_parameter("model.repel_strength_falloff").as_double();
     double anisotropy = get_parameter("model.anisotropy").as_double();
+    double avoid_radius = get_parameter("model.avoid_radius").as_double();
+    double preferred_walk_speed = get_parameter("model.preferred_walk_speed").as_double();
+    double max_walk_speed = get_parameter("model.max_walk_speed").as_double();
+    double relaxation_time = get_parameter("model.relaxation_time").as_double();
     return AgentData{
       .avoid_radius = avoid_radius,
       .anisotropy = anisotropy,
-      .repel_strength = repel_strength
+      .repel_strength = repel_strength,
+      .repel_strength_falloff = repel_strength_falloff,
+      .preferred_walk_speed = preferred_walk_speed,
+      .max_walk_speed = max_walk_speed,
+      .relaxation_time = relaxation_time
     };
-  }
-
-  void publish_markers() {
-    MarkerArray markers;
-    for (Agent a : agents_) {
-      auto& m = markers.markers.emplace_back();
-      m.header.frame_id = "odom";
-      m.header.stamp = now();
-      m.ns = "people";
-      m.id = a.id;
-      m.type = Marker::CYLINDER;
-      m.action = Marker::ADD;
-      m.pose.position.x = a.pos.x();
-      m.pose.position.y = a.pos.y();
-      m.pose.position.z = 0.85;
-      m.pose.orientation.w = 1.0;
-      m.scale.x = 2 * a.radius;
-      m.scale.y = 2 * a.radius;
-      m.scale.z = 1.7;
-      m.color.r = 1;
-      m.color.g = 0;
-      m.color.b = 0;
-      m.color.a = 1;
-    }
-    marker_pub_->publish(markers);
   }
 };
 
