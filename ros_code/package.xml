@@ -3,17 +3,19 @@
 <package format="3">
   <name>cs193project</name>
   <version>0.0.0</version>
-  <description>Apache-2.0</description>
+  <description>description</description>
   <maintainer email="justin.chen0160@gmail.com">justin</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <depend>rosgraph_msgs></depend>
+  <depend>rosgraph_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>visualization_msgs</depend>
   <depend>crowd_interfaces</depend>
+  <depend>eigen</depend>
 
   <exec_depend>ros_gz_sim</exec_depend>
   <exec_depend>ros_gz_bridge</exec_depend>

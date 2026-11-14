@@ -41,4 +41,19 @@ def generate_launch_description():
         output='screen',
     )
 
-    return LaunchDescription([gz_sim, bridge, clock_node, controller_node])
+    crowd_node = Node(
+        package='cs193project',
+        executable='crowd',
+        parameters=[{'num_people': 5,},
+                    {'update_frequency': 20.},
+                    {'repel_strength': 1.},
+                    {'avoid_radius': 1.5},
+                    {'anisotropy': 0.5},
+                    {'spawn_x_min': -10.},
+                    {'spawn_x_max': 10.},
+                    {'spawn_y_min': -10.},
+                    {'spawn_y_max': 10.}],
+        output='screen'
+    )
+
+    return LaunchDescription([gz_sim, bridge, clock_node, controller_node, crowd_node])
