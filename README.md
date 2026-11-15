@@ -37,6 +37,15 @@ Run the python launch file to launch all ROS2 nodes, the gazebo sim, the ROS2/ga
 ```bash
 ros2 launch cs193project sim.launch.py
 ```
+If the visualization seems jittery there may be multiple instances of the ROS2 nodes running. Run
+```bash
+pkill -f -e 'cs193project/|rviz2|gz sim|parameter_bridge|ros2 launch'
+```
+To delete all instances of the simulation. Then rerun
+```bash
+ros2 launch cs193project sim.launch.py
+```
+to launch the simulation again
 
 ## Roadmap
 1. build my robot SDF and make sure it drives in gazebo with proper inertia and collisions with basic terminal 2. command to set speed for testing
