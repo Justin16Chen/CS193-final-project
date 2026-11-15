@@ -34,9 +34,6 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-add_executable(clock_reciever src/clock_reciever.cpp)
-ament_target_dependencies(clock_reciever rclcpp rosgraph_msgs)
-
 add_executable(controller src/controller.cpp)
 ament_target_dependencies(controller rclcpp sensor_msgs geometry_msgs)
 
@@ -45,7 +42,7 @@ ament_target_dependencies(crowd rclcpp crowd_interfaces visualization_msgs)
 target_link_libraries(crowd Eigen3::Eigen)
 target_include_directories(crowd PRIVATE include)
 
-install(TARGETS clock_reciever controller crowd DESTINATION lib/${PROJECT_NAME})
-install(DIRECTORY launch gazebo_sim DESTINATION share/${PROJECT_NAME})
+install(TARGETS controller crowd DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY launch gazebo_sim rviz DESTINATION share/${PROJECT_NAME})
 
 ament_package()
