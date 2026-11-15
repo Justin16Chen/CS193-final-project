@@ -17,23 +17,26 @@ the system diagram is in docs/cs193 project flow diagram.png
 
 ## Overview
 The project has three main pieces:
-| **Simulation** | Gazebo Harmonic | Physics, collisions, robot model, lidar, odometry |
-| **Crowd node** | ROS 2 | Spawns pedestrians and moves them with a Social Force Model (goal attraction + person/wall/robot repulsion) |
-| **Planner node** | ROS 2 | Reads sensor data and pedestrian states, publishes velocity commands to reach the goal safely |
+ - **Simulation**: Gazebo Harmonic handles physics, collisions, robot model, lidar, odometry
+ - **Crowd node**: ROS2 node that creates people and updates them with social force model to avoid each other while reaching their goal
+ - **Controller node**: ROS2 node that takes in the gazebo lidar data and plans the path the robot should take
 
 ## Setup
-First need to download ROS2 and C and Gazebo
+1. Need to download ROS2 and C and Gazebo
 - [ROS 2 Jazzy](https://docs.ros.org/en/jazzy/Installation.html)
 - Ubuntu 24.04 (tested on WSL2)
 - Gazebo Harmonic + ROS–Gazebo integration:
-Make sure ROS is sourced in every terminal:
+2. Clone this repo into WSL ros2_ws folder
+4. Make sure ROS is sourced in every terminal:
 ```bash
 source /opt/ros/jazzy/setup.bash
 ```
-can test everything is downloaded properly with "gz sim shapes.sdf" in the terminal
 
 ## Usage
-run "gz sim simulation" to run the actual thing
+Run the python launch file to launch all ROS2 nodes, the gazebo sim, the ROS2/gazebo bridge, and RViz2
+```bash
+ros2 launch cs193project sim.launch.py
+```
 
 ## Roadmap
 1. build my robot SDF and make sure it drives in gazebo with proper inertia and collisions with basic terminal 2. command to set speed for testing
