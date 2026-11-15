@@ -34,8 +34,8 @@ public:
     spawn_agents(spawn_data, agent_data, agents_);
 
     auto update_period = duration<double>(update_period_sec);
-    update_timer_ = create_wall_timer(update_period, [this, agent_data, update_period_sec] () {
-      update_agents(agent_data, agents_, update_period_sec);
+    update_timer_ = create_wall_timer(update_period, [this, spawn_data, agent_data, update_period_sec] () {
+      update_agents(spawn_data, agent_data, agents_, update_period_sec);
       PersonArray people = agents_to_people(agents_);
       crowd_pub_->publish(people);
       publish_agent_markers(now(), agents_, people_marker_pub_, arrow_marker_pub_);

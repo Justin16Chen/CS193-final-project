@@ -46,7 +46,9 @@ PersonArray agents_to_people(std::vector<Agent>& agents);
 
 void spawn_agents(SpawnData& spawn_data, AgentData& agent_data, std::vector<Agent>& agents);
 
-void update_agents(AgentData agent_data, std::vector<Agent>& agents, double dt);
+void change_agent_goal(SpawnData spawn_data, Agent& agent);
+
+void update_agents(SpawnData spawn_data, AgentData agent_data, std::vector<Agent>& agents, double dt);
 
 void publish_agent_markers(rclcpp::Time time, std::vector<Agent>& agents, 
                            std::shared_ptr<Publisher<MarkerArray>> people_pub,

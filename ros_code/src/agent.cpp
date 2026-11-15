@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #define ABS(x) ((x) < 0 ? (-x) : (x))
+#define EPSILON (0.0001)
 
 using Eigen::Vector2d;
 using rclcpp::Publisher;
@@ -71,17 +72,41 @@ void spawn_agents(SpawnData& spawn_data, AgentData &agent_data, std::vector<Agen
   }
 }
 
+void change_agent_goal(SpawnData spawn_data, Agent& agent) {
+  double goal_rand = (double) rand() / RAND_MAX;
+  // swap left to right and right to left
+  if (ABS(agent.goal.x() - spawn_data.spawn_x_min) < EPSILON) {
+    agent.goal.x() = spawn_data.spawn_x_max;
+    agent.goal.y() = goal_rand * (spawn_data.spawn_y_max - spawn_data.spawn_y_min) + spawn_data.spawn_y_min;
+  }
+  else if (ABS(agent.goal.x() - spawn_data.spawn_x_max) < EPSILON) {
+    agent.goal.x() = spawn_data.spawn_x_min;
+    agent.goal.y() = goal_rand * (spawn_data.spawn_y_max - spawn_data.spawn_y_min) + spawn_data.spawn_y_min;
+  }
+  // swap top to bottom and bottom to top
+  else if (ABS(agent.goal.y() - spawn_data.spawn_y_min) < EPSILON) {
+    agent.goal.x() = goal_rand * (spawn_data.spawn_x_max - spawn_data.spawn_x_min) + spawn_data.spawn_x_min;
+    agent.goal.y() = spawn_data.spawn_y_max;
+  }
+  else {
+    agent.goal.x() = goal_rand * (spawn_data.spawn_x_max - spawn_data.spawn_x_min) + spawn_data.spawn_x_min;
+    agent.goal.y() = spawn_data.spawn_y_min;
+  }
+}
+
 // takes dt in seconds
-void update_agents(AgentData data, std::vector<Agent>& agents, double dt) {
+void update_agents(SpawnData spawn_data, AgentData data, std::vector<Agent>& agents, double dt) {
   // calculate all accelerations
   std::vector<Vector2d> accels(agents.size(), Vector2d::Zero());
   for (size_t i = 0; i < agents.size(); i++) {
     Agent& a = agents[i];
     Vector2d agent_to_goal = a.goal - a.pos;
-    Vector2d goal_accel = Vector2d::Zero();
-    if (agent_to_goal.norm() > 0.1) {
-      goal_accel = (data.preferred_walk_speed * agent_to_goal.normalized() - a.vel) / data.relaxation_time;
+    if (agent_to_goal.norm() < 0.2) {
+      change_agent_goal(spawn_data, a);
+      agent_to_goal = a.goal - a.pos;
     }
+    Vector2d goal_accel = Vector2d::Zero();
+    goal_accel = (data.preferred_walk_speed * agent_to_goal.normalized() - a.vel) / data.relaxation_time;
     Vector2d agent_repulsion_accel = Vector2d::Zero();
     for (Agent& b : agents) {
       if (a.id == b.id) {
