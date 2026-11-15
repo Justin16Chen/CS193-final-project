@@ -25,7 +25,7 @@ The project has three main pieces:
 1. Need to download ROS2 and C and Gazebo
 - [ROS 2 Jazzy](https://docs.ros.org/en/jazzy/Installation.html)
 - Ubuntu 24.04 (tested on WSL2)
-- Gazebo Harmonic + ROS–Gazebo integration:
+- Gazebo Harmonic
 2. Clone this repo into WSL ros2_ws folder
 4. Make sure ROS is sourced in every terminal:
 ```bash
