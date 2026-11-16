@@ -65,7 +65,7 @@ private:
   void stop() {
     cmd_vel_.linear.x = 0;
     cmd_vel_.linear.y = 0;
-    cmd_vel_.linear.y = 0;
+    cmd_vel_.linear.z = 0;
     cmd_vel_.angular.x = 0;
     cmd_vel_.angular.y = 0;
     cmd_vel_.angular.z = 0;

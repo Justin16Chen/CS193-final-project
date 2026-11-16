@@ -1,8 +1,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "crowd_interfaces/msg/person_array.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
-#include "agent.hpp"
-#include "rviz_helper.hpp"
+#include "crowd_sim/agent.hpp"
+#include "crowd_sim/rviz_helper.hpp"
 
 #include <stdlib.h>
 #include <time.h>
@@ -52,15 +52,15 @@ private:
 
   SpawnData get_spawn_data() {
     declare_parameter("num_agents", 5);
-    declare_parameter("model.spawn_x_min", -10.);
-    declare_parameter("model.spawn_y_min", -10.);
-    declare_parameter("model.spawn_x_max", 10.);
-    declare_parameter("model.spawn_y_max", 10.);
+    declare_parameter("crowd.spawn_x_min", -10.);
+    declare_parameter("crowd.spawn_y_min", -10.);
+    declare_parameter("crowd.spawn_x_max", 10.);
+    declare_parameter("crowd.spawn_y_max", 10.);
     int num_agents = get_parameter("num_agents").as_int();
-    double spawn_x_min = get_parameter("model.spawn_x_min").as_double();
-    double spawn_y_min = get_parameter("model.spawn_y_min").as_double();
-    double spawn_x_max = get_parameter("model.spawn_x_max").as_double();
-    double spawn_y_max = get_parameter("model.spawn_y_max").as_double();
+    double spawn_x_min = get_parameter("crowd.spawn_x_min").as_double();
+    double spawn_y_min = get_parameter("crowd.spawn_y_min").as_double();
+    double spawn_x_max = get_parameter("crowd.spawn_x_max").as_double();
+    double spawn_y_max = get_parameter("crowd.spawn_y_max").as_double();
     return SpawnData{
       .num_agents = num_agents,
       .spawn_x_min = spawn_x_min,
@@ -70,20 +70,20 @@ private:
     };
   }
   AgentData get_agent_data() {
-    declare_parameter("model.avoid_radius", 1.5);
-    declare_parameter("model.anisotropy", 0.1);
-    declare_parameter("model.repel_strength", 1.);
-    declare_parameter("model.repel_strength_falloff", 0.3);
-    declare_parameter("model.preferred_walk_speed", 1.);
-    declare_parameter("model.max_walk_speed", 1.);
-    declare_parameter("model.relaxation_time", 0.5);
-    double repel_strength = get_parameter("model.repel_strength").as_double();
-    double repel_strength_falloff = get_parameter("model.repel_strength_falloff").as_double();
-    double anisotropy = get_parameter("model.anisotropy").as_double();
-    double avoid_radius = get_parameter("model.avoid_radius").as_double();
-    double preferred_walk_speed = get_parameter("model.preferred_walk_speed").as_double();
-    double max_walk_speed = get_parameter("model.max_walk_speed").as_double();
-    double relaxation_time = get_parameter("model.relaxation_time").as_double();
+    declare_parameter("sfm.avoid_radius", 1.5);
+    declare_parameter("sfm.anisotropy", 0.1);
+    declare_parameter("sfm.repel_strength", 1.);
+    declare_parameter("sfm.repel_strength_falloff", 0.3);
+    declare_parameter("sfm.preferred_walk_speed", 1.);
+    declare_parameter("sfm.max_walk_speed", 1.);
+    declare_parameter("sfm.relaxation_time", 0.5);
+    double repel_strength = get_parameter("sfm.repel_strength").as_double();
+    double repel_strength_falloff = get_parameter("sfm.repel_strength_falloff").as_double();
+    double anisotropy = get_parameter("sfm.anisotropy").as_double();
+    double avoid_radius = get_parameter("sfm.avoid_radius").as_double();
+    double preferred_walk_speed = get_parameter("sfm.preferred_walk_speed").as_double();
+    double max_walk_speed = get_parameter("sfm.max_walk_speed").as_double();
+    double relaxation_time = get_parameter("sfm.relaxation_time").as_double();
     return AgentData{
       .avoid_radius = avoid_radius,
       .anisotropy = anisotropy,

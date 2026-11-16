@@ -35,15 +35,15 @@ source /opt/ros/jazzy/setup.bash
 ## Usage
 Run the python launch file to launch all ROS2 nodes, the gazebo sim, the ROS2/gazebo bridge, and RViz2
 ```bash
-ros2 launch cs193project sim.launch.py
+ros2 launch crowd_sim sim.launch.py
 ```
 If the visualization seems jittery there may be multiple instances of the ROS2 nodes running. Run
 ```bash
-pkill -f -e 'cs193project/|rviz2|gz sim|parameter_bridge|ros2 launch'
+pkill -f -e 'crowd_sim/|rviz2|gz sim|parameter_bridge|ros2 launch'
 ```
 To delete all instances of the simulation. Then rerun
 ```bash
-ros2 launch cs193project sim.launch.py
+ros2 launch crowd_sim sim.launch.py
 ```
 to launch the simulation again
 

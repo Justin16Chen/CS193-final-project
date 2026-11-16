@@ -72,12 +72,12 @@
 
         <!-- North wall (+y) -->
         <link name="wall_north">
-          <pose>0 5 1.5 0 0 0</pose>
+          <pose>$north_pose</pose>
           <collision name="collision">
-            <geometry><box><size>10 0.2 3</size></box></geometry>
+            <geometry><box><size>$north_south_size</size></box></geometry>
           </collision>
           <visual name="visual">
-            <geometry><box><size>10 0.2 3</size></box></geometry>
+            <geometry><box><size>$north_south_size</size></box></geometry>
             <material>
               <ambient>0.6 0.6 0.6 1</ambient>
               <diffuse>0.6 0.6 0.6 1</diffuse>
@@ -87,12 +87,12 @@
 
         <!-- South wall (-y) -->
         <link name="wall_south">
-          <pose>0 -5 1.5 0 0 0</pose>
+          <pose>$south_pose</pose>
           <collision name="collision">
-            <geometry><box><size>10 0.2 3</size></box></geometry>
+            <geometry><box><size>$north_south_size</size></box></geometry>
           </collision>
           <visual name="visual">
-            <geometry><box><size>10 0.2 3</size></box></geometry>
+            <geometry><box><size>$north_south_size</size></box></geometry>
             <material>
               <ambient>0.6 0.6 0.6 1</ambient>
               <diffuse>0.6 0.6 0.6 1</diffuse>
@@ -102,12 +102,12 @@
 
         <!-- East wall (+x) -->
         <link name="wall_east">
-          <pose>5 0 1.5 0 0 0</pose>
+          <pose>$east_pose</pose>
           <collision name="collision">
-            <geometry><box><size>0.2 10 3</size></box></geometry>
+            <geometry><box><size>$east_west_size</size></box></geometry>
           </collision>
           <visual name="visual">
-            <geometry><box><size>0.2 10 3</size></box></geometry>
+            <geometry><box><size>$east_west_size</size></box></geometry>
             <material>
               <ambient>0.6 0.6 0.6 1</ambient>
               <diffuse>0.6 0.6 0.6 1</diffuse>
@@ -117,12 +117,12 @@
 
         <!-- West wall (-x) -->
         <link name="wall_west">
-          <pose>-5 0 1.5 0 0 0</pose>
+          <pose>$west_pose</pose>
           <collision name="collision">
-            <geometry><box><size>0.2 10 3</size></box></geometry>
+            <geometry><box><size>$east_west_size</size></box></geometry>
           </collision>
           <visual name="visual">
-            <geometry><box><size>0.2 10 3</size></box></geometry>
+            <geometry><box><size>$east_west_size</size></box></geometry>
             <material>
               <ambient>0.6 0.6 0.6 1</ambient>
               <diffuse>0.6 0.6 0.6 1</diffuse>

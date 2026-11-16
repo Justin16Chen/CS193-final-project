@@ -3,7 +3,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "crowd_interfaces/msg/person.hpp"
 #include "crowd_interfaces/msg/person_array.hpp"
-#include "visualization_msgs/msg/marker.h"
+#include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 #include <cstdint>
 #include <Eigen/Dense>
@@ -40,7 +40,7 @@ struct AgentData {
   double relaxation_time;
 };
 
-Person agent_to_person(const Agent& agent);
+Person agent_to_person(Agent& agent);
 
 PersonArray agents_to_people(std::vector<Agent>& agents);
 

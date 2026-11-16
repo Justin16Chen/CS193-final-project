@@ -16,6 +16,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PersonArray.msg"
   DEPENDENCIES geometry_msgs std_msgs
 )
+
+ament_export_dependencies(rosidl_default_runtime)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights

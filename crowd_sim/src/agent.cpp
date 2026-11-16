@@ -1,8 +1,8 @@
-#include "agent.hpp"
+#include "crowd_sim/agent.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "visualization_msgs/msg/marker.h"
+#include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
-#include "rviz_helper.hpp"
+#include "crowd_sim/rviz_helper.hpp"
 
 #include <memory>
 #include <algorithm>
@@ -66,7 +66,7 @@ void spawn_agents(SpawnData& spawn_data, AgentData &agent_data, std::vector<Agen
     }
     else {
       agent.goal.x() = (double)rand() / RAND_MAX * x_range + spawn_data.spawn_x_min;
-      agent.goal.y() = spawn_data.spawn_y_min;
+      agent.goal.y() = spawn_data.spawn_y_max;
     }
     agents.push_back(agent);
   }

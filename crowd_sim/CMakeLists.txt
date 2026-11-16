@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(cs193project)
+project(crowd_sim)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -43,6 +43,6 @@ target_link_libraries(crowd Eigen3::Eigen)
 target_include_directories(crowd PRIVATE include)
 
 install(TARGETS controller crowd DESTINATION lib/${PROJECT_NAME})
-install(DIRECTORY launch gazebo_sim rviz DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY launch config gazebo_sim rviz DESTINATION share/${PROJECT_NAME})
 
 ament_package()
