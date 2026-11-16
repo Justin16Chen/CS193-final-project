@@ -7,7 +7,7 @@
 #include <memory>
 #include <algorithm>
 
-#define ABS(x) ((x) < 0 ? (-x) : (x))
+#define ABS(x) ((x) < 0 ? -(x) : (x))
 #define EPSILON (0.0001)
 
 using Eigen::Vector2d;
