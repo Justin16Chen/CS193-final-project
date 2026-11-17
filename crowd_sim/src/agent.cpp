@@ -3,9 +3,11 @@
 #include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 #include "crowd_sim/rviz_helper.hpp"
+#include "ros_gz_interfaces/srv/spawn_entity.hpp"
 
 #include <memory>
 #include <algorithm>
+#include <format>
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 constexpr double kEpsilon = 1e-4;
@@ -17,6 +19,7 @@ using rclcpp::Publisher;
 using visualization_msgs::msg::MarkerArray;
 using visualization_msgs::msg::Marker;
 using std::shared_ptr;
+using ros_gz_interfaces::srv::SpawnEntity;
 
 Person agent_to_person(Agent& agent) {
   Person p;
@@ -44,7 +47,8 @@ void spawn_agents(SpawnData& spawn_data, AgentData &agent_data, std::vector<Agen
   for (int i = 0; i < spawn_data.num_agents; i++) {
     Agent agent{};
     agent.id = id++;
-    agent.radius = agent_data.avoid_radius;
+    agent.radius = agent_data.person_radius;
+    agent.avoid_radius = agent_data.avoid_radius;
     agent.anisotropy = agent_data.anisotropy;
     agent.repel_strength = agent_data.repel_strength;
 
@@ -72,6 +76,33 @@ void spawn_agents(SpawnData& spawn_data, AgentData &agent_data, std::vector<Agen
     }
     agents.push_back(agent);
   }
+}
+
+shared_ptr<SpawnEntity::Request> make_spawn_agent_gazebo_request(const Agent& agent, const AgentData& agent_data) {
+  auto request = std::make_shared<SpawnEntity::Request>();
+  request->entity_factory.name = std::format("person_{}", agent.id);
+  request->entity_factory.sdf = person_sdf(request->entity_factory.name, agent_data.person_radius, agent_data.person_height);
+  request->entity_factory.pose.position.x = agent.pos.x();
+  request->entity_factory.pose.position.y = agent.pos.y();
+  request->entity_factory.pose.position.z = 0.0;
+  request->entity_factory.pose.orientation.w = 1.0;
+  request->entity_factory.allow_renaming = false;
+  return request;
+}
+
+void spawn_agents_gazebo(shared_ptr<rclcpp::Client<SpawnEntity>>& client, const AgentData& agent_data, std::vector<Agent>& agents, size_t i) {
+  if (i >= agents.size()) {
+    return;
+  }
+  auto request = make_spawn_agent_gazebo_request(agents[i], agent_data);
+  client->async_send_request(request,
+    // agent_data is copied: the caller's copy may be a constructor local that is gone by the time this fires
+    [&client, agent_data, &agents, i] (rclcpp::Client<SpawnEntity>::SharedFuture f) {
+      if (!f.get()->success) {
+        RCLCPP_WARN(rclcpp::get_logger("crowd"), "spawn %zu failed", i);
+      }
+      spawn_agents_gazebo(client, agent_data, agents, i + 1);
+    });
 }
 
 void change_agent_goal(SpawnData spawn_data, Agent& agent) {
@@ -143,9 +174,28 @@ void publish_agent_markers(rclcpp::Time time, const AgentData& agent_data, std::
   MarkerArray people_markers;
   MarkerArray arrow_markers;
   for (Agent a : agents) {
-    people_markers.markers.push_back(create_marker_cylinder(a.id, time, a.pos, agent_data.person_radius, 1));
+    people_markers.markers.push_back(create_marker_cylinder(a.id, time, a.pos, agent_data.person_radius, agent_data.person_height));
     arrow_markers.markers.push_back(create_marker_arrow(a.id, time, a.pos, a.goal));
   }
   people_pub->publish(people_markers);
   arrow_pub->publish(arrow_markers);
+}
+
+std::string person_sdf(const std::string& name, double radius, double height) {
+  return std::format(R"(<?xml version="1.0"?>
+<sdf version="1.10">
+  <model name="{0}">
+    <static>true</static>
+    <link name="body">
+      <pose>0 0 {3} 0 0 0</pose>
+      <collision name="collision">
+        <geometry><cylinder><radius>{1}</radius><length>{2}</length></cylinder></geometry>
+      </collision>
+      <visual name="visual">
+        <geometry><cylinder><radius>{1}</radius><length>{2}</length></cylinder></geometry>
+        <material><ambient>1 0 0 1</ambient><diffuse>1 0 0 1</diffuse></material>
+      </visual>
+    </link>
+  </model>
+</sdf>)", name, radius, height, height / 2);
 }

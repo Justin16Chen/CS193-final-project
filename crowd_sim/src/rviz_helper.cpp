@@ -17,11 +17,11 @@ Marker create_marker_cylinder(int id, rclcpp::Time time, const Eigen::Vector2d& 
   m.action = Marker::ADD;
   m.pose.position.x = pos.x();
   m.pose.position.y = pos.y();
-  m.pose.position.z = 0.85;
+  m.pose.position.z = height * 0.5;   // cylinder is centred, so base sits on the ground
   m.pose.orientation.w = 1.0;
   m.scale.x = radius * 2;
   m.scale.y = radius * 2;
-  m.scale.z = height * 0.5;
+  m.scale.z = height;
   m.color.r = 1;
   m.color.g = 0;
   m.color.b = 0;

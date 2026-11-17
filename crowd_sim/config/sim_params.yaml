@@ -14,6 +14,7 @@ crowd:
     # social force model (sfm.*)
     sfm:
       person_radius: 0.2
+      person_height: 1.
       avoid_radius: 0.75
       anisotropy: 0.5
       repel_strength: 0.45

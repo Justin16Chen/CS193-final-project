@@ -3,6 +3,7 @@
 #include "visualization_msgs/msg/marker_array.hpp"
 #include "crowd_sim/agent.hpp"
 #include "crowd_sim/rviz_helper.hpp"
+#include "ros_gz_interfaces/srv/spawn_entity.hpp"
 
 #include <time.h>
 #include <algorithm>
@@ -17,6 +18,7 @@ using crowd_interfaces::msg::PersonArray;
 using crowd_interfaces::msg::Person;
 using visualization_msgs::msg::MarkerArray;
 using visualization_msgs::msg::Marker;
+using ros_gz_interfaces::srv::SpawnEntity;
 
 class Crowd : public Node {
 public:
@@ -32,6 +34,9 @@ public:
     SpawnData spawn_data = get_spawn_data();
     AgentData agent_data = get_agent_data();
     spawn_agents(spawn_data, agent_data, agents_);
+    spawn_client_ = create_client<SpawnEntity>("/world/crowd_world/create");
+    spawn_client_->wait_for_service(std::chrono::seconds(10));
+    spawn_agents_gazebo(spawn_client_, agent_data, agents_);
 
     last_update_time_ = now();
     auto update_period = duration<double>(update_period_sec);
@@ -60,6 +65,8 @@ private:
 
   std::vector<Agent> agents_;
 
+  shared_ptr<rclcpp::Client<SpawnEntity>> spawn_client_;
+
   SpawnData get_spawn_data() {
     declare_parameter("num_agents", 5);
     declare_parameter("crowd.spawn_x_min", -10.);
@@ -81,6 +88,7 @@ private:
   }
   AgentData get_agent_data() {
     declare_parameter("sfm.person_radius", 0.2);
+    declare_parameter("sfm.person_height", 1.7);
     declare_parameter("sfm.avoid_radius", 1.5);
     declare_parameter("sfm.anisotropy", 0.1);
     declare_parameter("sfm.repel_strength", 1.);
@@ -92,12 +100,14 @@ private:
     double repel_strength_falloff = get_parameter("sfm.repel_strength_falloff").as_double();
     double anisotropy = get_parameter("sfm.anisotropy").as_double();
     double person_radius = get_parameter("sfm.person_radius").as_double();
+    double person_height = get_parameter("sfm.person_height").as_double();
     double avoid_radius = get_parameter("sfm.avoid_radius").as_double();
     double preferred_walk_speed = get_parameter("sfm.preferred_walk_speed").as_double();
     double max_walk_speed = get_parameter("sfm.max_walk_speed").as_double();
     double relaxation_time = get_parameter("sfm.relaxation_time").as_double();
     return AgentData{
       .person_radius = person_radius,
+      .person_height = person_height,
       .avoid_radius = avoid_radius,
       .anisotropy = anisotropy,
       .repel_strength = repel_strength,

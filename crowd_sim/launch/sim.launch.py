@@ -31,9 +31,14 @@ def generate_launch_description():
     bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
-        arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
-                   '/lidar@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
-                   '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist'],
+        arguments=[
+          '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
+          '/lidar@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
+          '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',
+          '/world/crowd_world/create@ros_gz_interfaces/srv/SpawnEntity',
+          '/world/crowd_world/set_pose@ros_gz_interfaces/srv/SetEntityPose',
+          '/world/crowd_world/remove@ros_gz_interfaces/srv/DeleteEntity',
+        ],
         output='screen',
     )
 

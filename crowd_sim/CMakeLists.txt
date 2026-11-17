@@ -15,6 +15,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(crowd_interfaces REQUIRED)
+find_package(ros_gz_interfaces REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 # uncomment the following section in order to fill in
@@ -37,7 +38,7 @@ add_executable(controller src/controller.cpp)
 ament_target_dependencies(controller rclcpp sensor_msgs geometry_msgs)
 
 add_executable(crowd src/crowd.cpp src/agent.cpp src/rviz_helper.cpp)
-ament_target_dependencies(crowd rclcpp crowd_interfaces visualization_msgs)
+ament_target_dependencies(crowd rclcpp crowd_interfaces ros_gz_interfaces visualization_msgs)
 target_link_libraries(crowd Eigen3::Eigen)
 target_include_directories(crowd PRIVATE include)
 
