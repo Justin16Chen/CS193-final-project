@@ -8,9 +8,11 @@
 #include <algorithm>
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
-#define EPSILON (0.0001)
+constexpr double kEpsilon = 1e-4;
 
 using Eigen::Vector2d;
+using crowd_interfaces::msg::Person;
+using crowd_interfaces::msg::PersonArray;
 using rclcpp::Publisher;
 using visualization_msgs::msg::MarkerArray;
 using visualization_msgs::msg::Marker;
@@ -40,7 +42,7 @@ void spawn_agents(SpawnData& spawn_data, AgentData &agent_data, std::vector<Agen
   double x_range = spawn_data.spawn_x_max - spawn_data.spawn_x_min;
   double y_range = spawn_data.spawn_y_max - spawn_data.spawn_y_min;
   for (int i = 0; i < spawn_data.num_agents; i++) {
-    Agent agent;
+    Agent agent{};
     agent.id = id++;
     agent.radius = agent_data.avoid_radius;
     agent.anisotropy = agent_data.anisotropy;
@@ -75,16 +77,16 @@ void spawn_agents(SpawnData& spawn_data, AgentData &agent_data, std::vector<Agen
 void change_agent_goal(SpawnData spawn_data, Agent& agent) {
   double goal_rand = (double) rand() / RAND_MAX;
   // swap left to right and right to left
-  if (ABS(agent.goal.x() - spawn_data.spawn_x_min) < EPSILON) {
+  if (ABS(agent.goal.x() - spawn_data.spawn_x_min) < kEpsilon) {
     agent.goal.x() = spawn_data.spawn_x_max;
     agent.goal.y() = goal_rand * (spawn_data.spawn_y_max - spawn_data.spawn_y_min) + spawn_data.spawn_y_min;
   }
-  else if (ABS(agent.goal.x() - spawn_data.spawn_x_max) < EPSILON) {
+  else if (ABS(agent.goal.x() - spawn_data.spawn_x_max) < kEpsilon) {
     agent.goal.x() = spawn_data.spawn_x_min;
     agent.goal.y() = goal_rand * (spawn_data.spawn_y_max - spawn_data.spawn_y_min) + spawn_data.spawn_y_min;
   }
   // swap top to bottom and bottom to top
-  else if (ABS(agent.goal.y() - spawn_data.spawn_y_min) < EPSILON) {
+  else if (ABS(agent.goal.y() - spawn_data.spawn_y_min) < kEpsilon) {
     agent.goal.x() = goal_rand * (spawn_data.spawn_x_max - spawn_data.spawn_x_min) + spawn_data.spawn_x_min;
     agent.goal.y() = spawn_data.spawn_y_max;
   }
@@ -115,9 +117,9 @@ void update_agents(SpawnData spawn_data, AgentData data, std::vector<Agent>& age
       Vector2d a_to_b = b.pos - a.pos;
       double avoid_dist = a.radius + b.radius - a_to_b.norm();
       double avoid_accel_mag = data.repel_strength * exp(avoid_dist / data.repel_strength_falloff);
-      double cos_angle = a.vel.normalized().dot(a_to_b.normalized());
-      double anisotrophy = data.anisotropy + (1 - data.anisotropy) * (1 + cos_angle) * 0.5;
-      agent_repulsion_accel += avoid_accel_mag * -a_to_b.normalized() * anisotrophy;
+      double cos_angle = a.vel.norm() > kEpsilon && a_to_b.norm() > kEpsilon ? a.vel.normalized().dot(a_to_b.normalized()) : 1;
+      double anisotropy = data.anisotropy + (1 - data.anisotropy) * (1 + cos_angle) * 0.5;
+      agent_repulsion_accel += avoid_accel_mag * -a_to_b.normalized() * anisotropy;
     }
     accels[i] = goal_accel + agent_repulsion_accel;
   }
@@ -135,12 +137,13 @@ void update_agents(SpawnData spawn_data, AgentData data, std::vector<Agent>& age
   }
 }
 
-void publish_agent_markers(rclcpp::Time time, std::vector<Agent>& agents, shared_ptr<Publisher<MarkerArray>> people_pub,
+void publish_agent_markers(rclcpp::Time time, const AgentData& agent_data, std::vector<Agent>& agents,
+                           shared_ptr<Publisher<MarkerArray>> people_pub,
                            shared_ptr<Publisher<MarkerArray>> arrow_pub) {
   MarkerArray people_markers;
   MarkerArray arrow_markers;
   for (Agent a : agents) {
-    people_markers.markers.push_back(create_marker_cylinder(a.id, time, a.pos, 0.25, 1));
+    people_markers.markers.push_back(create_marker_cylinder(a.id, time, a.pos, agent_data.person_radius, 1));
     arrow_markers.markers.push_back(create_marker_arrow(a.id, time, a.pos, a.goal));
   }
   people_pub->publish(people_markers);

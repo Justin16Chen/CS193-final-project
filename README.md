@@ -5,15 +5,15 @@ robot that avoids moving people in a crowded area build in ROS2 and gazebo
 i want to learn more about ros2 and gazebo and this project will solve that problem
 
 ## How it works
-robot code and control algorithm written in C using ROS2 framework
-crowd control code also in C and ROS2
-physics and sensor simulation done in gazebo
+robot code and control algorithm written in C++ using the ROS 2 framework
+crowd simulation code also in C++ and ROS 2
+physics and sensor simulation done in Gazebo
 
 the system diagram is in docs/cs193 project flow diagram.png
 
 ## Tech stack
-- **Language:** C
-- **Libraries:** ROS2, Gazebo
+- **Language:** C++20, Python (launch)
+- **Libraries:** ROS 2 Jazzy, Gazebo Harmonic, Eigen3
 
 ## Overview
 The project has three main pieces:
@@ -21,15 +21,37 @@ The project has three main pieces:
  - **Crowd node**: ROS2 node that creates people and updates them with social force model to avoid each other while reaching their goal
  - **Controller node**: ROS2 node that takes in the gazebo lidar data and plans the path the robot should take
 
+## Package layout
+```
+crowd_interfaces/        custom messages
+  msg/Person.msg         id, position, velocity, radius
+  msg/PersonArray.msg    header + Person[]
+crowd_sim/               nodes, launch, config, world
+  src/crowd.cpp          crowd node: spawns agents, runs the social force model
+  src/agent.cpp          agent update + marker publishing
+  src/controller.cpp     controller node: lidar in, cmd_vel out
+  include/crowd_sim/     headers
+  launch/sim.launch.py   starts Gazebo, bridge, nodes, RViz
+  config/sim_params.yaml crowd node parameters
+  config/world.yaml      wall geometry used to generate the Gazebo world
+  gazebo_sim/            world template + build_sdf.py
+  rviz/                  RViz config
+```
+
 ## Setup
-1. Need to download ROS2 and C and Gazebo
+1. Install ROS 2, a C++ compiler, and Gazebo
 - [ROS 2 Jazzy](https://docs.ros.org/en/jazzy/Installation.html)
 - Ubuntu 24.04 (tested on WSL2)
 - Gazebo Harmonic
-2. Clone this repo into WSL ros2_ws folder
-4. Make sure ROS is sourced in every terminal:
+2. Clone this repo into `~/ros2_ws/src`
+3. Make sure ROS is sourced in every terminal:
 ```bash
 source /opt/ros/jazzy/setup.bash
+```
+4. Build and source the workspace from `~/ros2_ws`:
+```bash
+colcon build --packages-up-to crowd_sim
+source install/setup.bash
 ```
 
 ## Usage

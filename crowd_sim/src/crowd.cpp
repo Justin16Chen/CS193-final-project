@@ -4,8 +4,8 @@
 #include "crowd_sim/agent.hpp"
 #include "crowd_sim/rviz_helper.hpp"
 
-#include <stdlib.h>
 #include <time.h>
+#include <algorithm>
 
 using rclcpp::Node;
 using rclcpp::duration;
@@ -33,17 +33,27 @@ public:
     AgentData agent_data = get_agent_data();
     spawn_agents(spawn_data, agent_data, agents_);
 
+    last_update_time_ = now();
     auto update_period = duration<double>(update_period_sec);
-    update_timer_ = create_wall_timer(update_period, [this, spawn_data, agent_data, update_period_sec] () {
-      update_agents(spawn_data, agent_data, agents_, update_period_sec);
+    update_timer_ = create_wall_timer(update_period, [this, spawn_data, agent_data] () {
+      rclcpp::Time t = now();
+      double dt = std::clamp((t - last_update_time_).seconds(), 0.0, kMaxDt);
+      last_update_time_ = t;
+
+      if (dt > 0.0) {
+        update_agents(spawn_data, agent_data, agents_, dt);
+      }
       PersonArray people = agents_to_people(agents_);
       crowd_pub_->publish(people);
-      publish_agent_markers(now(), agents_, people_marker_pub_, arrow_marker_pub_);
+      publish_agent_markers(t, agent_data, agents_, people_marker_pub_, arrow_marker_pub_);
     });
   }
 
 private:
-  shared_ptr<TimerBase> update_timer_; 
+  static constexpr double kMaxDt = 0.1;  // seconds
+
+  shared_ptr<TimerBase> update_timer_;
+  rclcpp::Time last_update_time_;
   shared_ptr<Publisher<PersonArray>> crowd_pub_;
   shared_ptr<Publisher<MarkerArray>> people_marker_pub_;
   shared_ptr<Publisher<MarkerArray>> arrow_marker_pub_;
@@ -70,6 +80,7 @@ private:
     };
   }
   AgentData get_agent_data() {
+    declare_parameter("sfm.person_radius", 0.2);
     declare_parameter("sfm.avoid_radius", 1.5);
     declare_parameter("sfm.anisotropy", 0.1);
     declare_parameter("sfm.repel_strength", 1.);
@@ -80,11 +91,13 @@ private:
     double repel_strength = get_parameter("sfm.repel_strength").as_double();
     double repel_strength_falloff = get_parameter("sfm.repel_strength_falloff").as_double();
     double anisotropy = get_parameter("sfm.anisotropy").as_double();
+    double person_radius = get_parameter("sfm.person_radius").as_double();
     double avoid_radius = get_parameter("sfm.avoid_radius").as_double();
     double preferred_walk_speed = get_parameter("sfm.preferred_walk_speed").as_double();
     double max_walk_speed = get_parameter("sfm.max_walk_speed").as_double();
     double relaxation_time = get_parameter("sfm.relaxation_time").as_double();
     return AgentData{
+      .person_radius = person_radius,
       .avoid_radius = avoid_radius,
       .anisotropy = anisotropy,
       .repel_strength = repel_strength,
