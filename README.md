@@ -36,6 +36,7 @@ crowd_sim/               nodes, launch, config, world
   config/world.yaml      wall geometry used to generate the Gazebo world
   gazebo_sim/            world template + build_sdf.py
   rviz/                  RViz config
+scripts/                 build / run / kill helpers (see Usage)
 ```
 
 ## Setup
@@ -48,26 +49,41 @@ crowd_sim/               nodes, launch, config, world
 ```bash
 source /opt/ros/jazzy/setup.bash
 ```
-4. Build and source the workspace from `~/ros2_ws`:
+4. Build the workspace (from anywhere; the script finds `~/ros2_ws` relative to itself):
 ```bash
-colcon build --packages-up-to crowd_sim
-source install/setup.bash
+~/ros2_ws/src/cs193project/scripts/build_sim.sh
 ```
+This runs `colcon build --packages-up-to crowd_sim --symlink-install`, so later edits to
+the YAML, launch file and world template take effect on the next launch without rebuilding.
+C++ changes still need a rebuild.
 
 ## Usage
-Run the python launch file to launch all ROS2 nodes, the gazebo sim, the ROS2/gazebo bridge, and RViz2
+All helpers live in `scripts/`. They source ROS and the workspace themselves.
+
+| script | what it does |
+|---|---|
+| `scripts/run_sim.sh` | kills any leftover sim processes, then `ros2 launch crowd_sim sim.launch.py` (Gazebo, bridge, nodes, RViz) |
+| `scripts/build_sim.sh` | builds `crowd_interfaces` + `crowd_sim`; extra args are passed to `colcon build` |
+| `scripts/build_run_sim.sh` | build, then run |
+| `scripts/kill_sim.sh` | stops Gazebo (including the server, which survives Ctrl-C), the bridge, the nodes and RViz |
+
+Typical loop after a code change:
 ```bash
-ros2 launch crowd_sim sim.launch.py
+~/ros2_ws/src/cs193project/scripts/build_run_sim.sh
 ```
-If the visualization seems jittery there may be multiple instances of the ROS2 nodes running. Run
+
+If Gazebo opens as a white window, or the agents in RViz do not move, a Gazebo server from a
+previous run is still alive. `run_sim.sh` already clears it; to do it by hand:
 ```bash
-pkill -f -e 'crowd_sim/|rviz2|gz sim|parameter_bridge|ros2 launch'
+~/ros2_ws/src/cs193project/scripts/kill_sim.sh
 ```
-To delete all instances of the simulation. Then rerun
+
+Optional: add short aliases to `~/.bashrc` so you can type `sim` instead of the full path:
 ```bash
-ros2 launch crowd_sim sim.launch.py
+alias sim='~/ros2_ws/src/cs193project/scripts/build_run_sim.sh'
+alias simrun='~/ros2_ws/src/cs193project/scripts/run_sim.sh'
+alias simkill='~/ros2_ws/src/cs193project/scripts/kill_sim.sh'
 ```
-to launch the simulation again
 
 ## Roadmap
 1. build my robot SDF and make sure it drives in gazebo with proper inertia and collisions with basic terminal 2. command to set speed for testing
