@@ -19,7 +19,6 @@ using rclcpp::Publisher;
 using visualization_msgs::msg::MarkerArray;
 using visualization_msgs::msg::Marker;
 using std::shared_ptr;
-using ros_gz_interfaces::srv::SpawnEntity;
 
 Person agent_to_person(Agent& agent) {
   Person p;
@@ -105,6 +104,19 @@ void spawn_agents_gazebo(shared_ptr<rclcpp::Client<SpawnEntity>>& client, const 
     });
 }
 
+shared_ptr<SetEntityPose::Request> make_set_pose_request(const Agent& agent) {
+  auto request = std::make_shared<SetEntityPose::Request>();
+  request->entity.name = std::format("person_{}", agent.id);
+  request->entity.type = Entity::MODEL;
+  request->pose.position.x = agent.pos.x();
+  request->pose.position.y = agent.pos.y();
+  request->pose.position.z = 0.0;
+  double yaw = agent.vel.norm() > kEpsilon ? std::atan2(agent.vel.y(), agent.vel.x()) : 0.0;
+  request->pose.orientation.z = std::sin(yaw / 2.0);
+  request->pose.orientation.w = std::cos(yaw / 2.0);
+  return request;
+}
+
 void change_agent_goal(SpawnData spawn_data, Agent& agent) {
   double goal_rand = (double) rand() / RAND_MAX;
   // swap left to right and right to left
@@ -146,9 +158,10 @@ void update_agents(SpawnData spawn_data, AgentData data, std::vector<Agent>& age
         continue;
       }
       Vector2d a_to_b = b.pos - a.pos;
-      double avoid_dist = a.radius + b.radius - a_to_b.norm();
+      double avoid_dist = a.avoid_radius + b.avoid_radius - a_to_b.norm();
       double avoid_accel_mag = data.repel_strength * exp(avoid_dist / data.repel_strength_falloff);
-      double cos_angle = a.vel.norm() > kEpsilon && a_to_b.norm() > kEpsilon ? a.vel.normalized().dot(a_to_b.normalized()) : 1;
+      double cos_angle = a.vel.norm() > kEpsilon && a_to_b.norm() > kEpsilon ? 
+        a.vel.normalized().dot(a_to_b.normalized()) : 1;
       double anisotropy = data.anisotropy + (1 - data.anisotropy) * (1 + cos_angle) * 0.5;
       agent_repulsion_accel += avoid_accel_mag * -a_to_b.normalized() * anisotropy;
     }
@@ -165,6 +178,19 @@ void update_agents(SpawnData spawn_data, AgentData data, std::vector<Agent>& age
       a.vel = a.vel.normalized() * new_mag;
     }
     a.pos += a.vel * dt;
+  }
+}
+
+void update_agents_gazebo(shared_ptr<rclcpp::Client<SetEntityPose>>& client,
+                          const std::vector<Agent>& agents) {
+  for (const Agent& agent : agents) {
+    auto request = make_set_pose_request(agent);
+    client->async_send_request(request,
+      [id = agent.id] (rclcpp::Client<SetEntityPose>::SharedFuture f) {
+        if (!f.get()->success) {
+          RCLCPP_WARN(rclcpp::get_logger("crowd"), "set_pose for person_%u rejected", id);
+        }
+      });
   }
 }
 

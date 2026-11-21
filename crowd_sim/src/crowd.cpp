@@ -38,6 +38,9 @@ public:
     spawn_client_->wait_for_service(std::chrono::seconds(10));
     spawn_agents_gazebo(spawn_client_, agent_data, agents_);
 
+    set_pose_client_ = create_client<SetEntityPose>("/world/crowd_world/set_pose");
+    set_pose_client_->wait_for_service(std::chrono::seconds(10));
+
     last_update_time_ = now();
     auto update_period = duration<double>(update_period_sec);
     update_timer_ = create_wall_timer(update_period, [this, spawn_data, agent_data] () {
@@ -47,6 +50,7 @@ public:
 
       if (dt > 0.0) {
         update_agents(spawn_data, agent_data, agents_, dt);
+        update_agents_gazebo(set_pose_client_, agents_);
       }
       PersonArray people = agents_to_people(agents_);
       crowd_pub_->publish(people);
@@ -66,6 +70,7 @@ private:
   std::vector<Agent> agents_;
 
   shared_ptr<rclcpp::Client<SpawnEntity>> spawn_client_;
+  shared_ptr<rclcpp::Client<SetEntityPose>> set_pose_client_;
 
   SpawnData get_spawn_data() {
     declare_parameter("num_agents", 5);

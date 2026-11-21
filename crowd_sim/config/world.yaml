@@ -2,9 +2,9 @@
 # This is NOT a ROS params file: rcl rejects any top-level key without ros__parameters,
 # so it must stay separate from sim_params.yaml.
 world:
-  x_min: -15.0
-  x_max: 15.0
-  y_min: -15.0
-  y_max: 15.0
+  x_min: -7.0
+  x_max: 7.0
+  y_min: -7.0
+  y_max: 7.0
   wall_thickness: 0.2
   wall_height: 3.0
