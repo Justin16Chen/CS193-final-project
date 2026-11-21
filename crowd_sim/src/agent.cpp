@@ -39,7 +39,59 @@ PersonArray agents_to_people(std::vector<Agent>& agents) {
   return person_array;
 }
 
+enum class Side {
+  TOP,
+  LEFT,
+  BOTTOM,
+  RIGHT
+};
+
+void set_agent_goal(SpawnData& spawn_data, Agent& agent) {
+  double goal_rand = (double) rand() / RAND_MAX;
+  Side side;
+
+  if (!spawn_data.spawn_left_right) {
+    side = goal_rand < 0.5 ? Side::TOP : Side::BOTTOM;
+  }
+  else if (!spawn_data.spawn_top_bottom) {
+    side = goal_rand < 0.5 ? Side::LEFT : Side::RIGHT;
+  }
+  else {
+    if (goal_rand < 0.5) {
+      side = goal_rand < 0.25 ? Side::TOP : Side::BOTTOM;
+    }
+    else {
+      side = goal_rand < 0.75 ? Side::LEFT : Side::RIGHT;
+    }
+  }
+  double x_range = spawn_data.spawn_x_max - spawn_data.spawn_x_min;
+  double y_range = spawn_data.spawn_y_max - spawn_data.spawn_y_min;
+  switch (side) {
+    case Side::TOP:
+      agent.goal.x() = (double)rand() / RAND_MAX * x_range + spawn_data.spawn_x_min;
+      agent.goal.y() = spawn_data.spawn_y_min;
+    break;
+    case Side::BOTTOM:
+      agent.goal.x() = (double)rand() / RAND_MAX * x_range + spawn_data.spawn_x_min;
+      agent.goal.y() = spawn_data.spawn_y_max;
+    break;
+    case Side::LEFT:
+      agent.goal.x() = spawn_data.spawn_x_min;
+      agent.goal.y() = (double)rand() / RAND_MAX * y_range + spawn_data.spawn_y_min;
+    break;
+    case Side::RIGHT:
+      agent.goal.x() = spawn_data.spawn_x_max;
+      agent.goal.y() = (double)rand() / RAND_MAX * y_range + spawn_data.spawn_y_min;
+    break;
+  };
+}
+
 void spawn_agents(SpawnData& spawn_data, AgentData &agent_data, std::vector<Agent>& agents) {
+  RCLCPP_INFO(rclcpp::get_logger("crowd"), "spawn_left_right: %d | spawn_top_bottom: %d\n",
+              spawn_data.spawn_left_right, spawn_data.spawn_top_bottom);
+  if (!spawn_data.spawn_left_right && !spawn_data.spawn_top_bottom)
+    return;
+
   static int id = 0;
   double x_range = spawn_data.spawn_x_max - spawn_data.spawn_x_min;
   double y_range = spawn_data.spawn_y_max - spawn_data.spawn_y_min;
@@ -56,23 +108,7 @@ void spawn_agents(SpawnData& spawn_data, AgentData &agent_data, std::vector<Agen
     agent.pos.x() = x;
     agent.pos.y() = y;
 
-    double goal_rand = (double) rand() / RAND_MAX;
-    if (goal_rand < 0.25) {
-      agent.goal.x() = spawn_data.spawn_x_min;
-      agent.goal.y() = (double)rand() / RAND_MAX * y_range + spawn_data.spawn_y_min;
-    }
-    else if (goal_rand < 0.5) {
-      agent.goal.x() = spawn_data.spawn_x_max;
-      agent.goal.y() = (double)rand() / RAND_MAX * y_range + spawn_data.spawn_y_min;
-    }
-    else if (goal_rand < 0.75) {
-      agent.goal.x() = (double)rand() / RAND_MAX * x_range + spawn_data.spawn_x_min;
-      agent.goal.y() = spawn_data.spawn_y_min;
-    }
-    else {
-      agent.goal.x() = (double)rand() / RAND_MAX * x_range + spawn_data.spawn_x_min;
-      agent.goal.y() = spawn_data.spawn_y_max;
-    }
+    set_agent_goal(spawn_data, agent);
     agents.push_back(agent);
   }
 }
@@ -152,18 +188,35 @@ void update_agents(SpawnData spawn_data, AgentData data, std::vector<Agent>& age
     }
     Vector2d goal_accel = Vector2d::Zero();
     goal_accel = (data.preferred_walk_speed * agent_to_goal.normalized() - a.vel) / data.relaxation_time;
+    // heading: velocity direction, or direction to goal when (nearly) stopped so a stuck
+    // agent still knows which way is "forward" for anisotropy and sidestepping
+    Vector2d heading = a.vel.norm() > kEpsilon ? a.vel.normalized() : agent_to_goal.normalized();
+    Vector2d right(heading.y(), -heading.x());  // 90 deg clockwise from heading
     Vector2d agent_repulsion_accel = Vector2d::Zero();
     for (Agent& b : agents) {
       if (a.id == b.id) {
         continue;
       }
       Vector2d a_to_b = b.pos - a.pos;
+      if (a_to_b.norm() < kEpsilon) {
+        continue;  // coincident: no defined direction, skip rather than produce NaN
+      }
+      Vector2d a_to_b_hat = a_to_b.normalized();
       double avoid_dist = a.avoid_radius + b.avoid_radius - a_to_b.norm();
       double avoid_accel_mag = data.repel_strength * exp(avoid_dist / data.repel_strength_falloff);
-      double cos_angle = a.vel.norm() > kEpsilon && a_to_b.norm() > kEpsilon ? 
-        a.vel.normalized().dot(a_to_b.normalized()) : 1;
+      double cos_angle = heading.dot(a_to_b_hat);
       double anisotropy = data.anisotropy + (1 - data.anisotropy) * (1 + cos_angle) * 0.5;
-      agent_repulsion_accel += avoid_accel_mag * -a_to_b.normalized() * anisotropy;
+
+      // sidestep magnitude: 0 outside the cone, ramps to 1 when the neighbor is dead-ahead
+      double headon = std::clamp((cos_angle - data.sidestep_cone) / (1.0 - data.sidestep_cone), 0.0, 1.0);
+      headon *= headon;  // remove the kink at the cone edge
+      // sidestep direction: 2D cross product, +lat means neighbor is on the left -> steer right (f < 0 flips)
+      double lat = heading.x() * a_to_b_hat.y() - heading.y() * a_to_b_hat.x();
+      double f = std::clamp(-lat / data.sidestep_lat_scale, -1.0, 1.0);
+      f += (1.0 - ABS(f)) * data.sidestep_bias;  // fill the dead-ahead tie with the bias
+
+      Vector2d sidestep = data.sidestep * headon * f * right;
+      agent_repulsion_accel += avoid_accel_mag * anisotropy * (-a_to_b_hat + sidestep);
     }
     accels[i] = goal_accel + agent_repulsion_accel;
   }
@@ -173,7 +226,7 @@ void update_agents(SpawnData spawn_data, AgentData data, std::vector<Agent>& age
     Agent& a = agents[i];
     a.vel += accels[i] * dt;
     double mag = a.vel.norm();
-    double new_mag = std::clamp(mag, -data.max_walk_speed, data.max_walk_speed);
+    double new_mag = std::clamp(mag, data.min_walk_speed, data.max_walk_speed);
     if (ABS(new_mag - mag) > 0.0001) {
       a.vel = a.vel.normalized() * new_mag;
     }

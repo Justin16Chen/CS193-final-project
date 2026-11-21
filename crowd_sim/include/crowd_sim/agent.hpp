@@ -31,6 +31,7 @@ struct Agent {
 
 struct SpawnData {
   int num_agents;
+  bool spawn_left_right, spawn_top_bottom;
   double spawn_x_min, spawn_x_max;
   double spawn_y_min, spawn_y_max;
 };
@@ -40,10 +41,12 @@ struct AgentData {
   double person_height;   // physical body height, used for drawing
   double avoid_radius;    // social-force personal-space radius
   double anisotropy;
-  double repel_strength;
-  double repel_strength_falloff;
-  double preferred_walk_speed;
-  double max_walk_speed;
+  double sidestep;            // lateral steering strength relative to the radial repulsion
+  double sidestep_cone;       // cos of half-angle: sidestep is 0 outside this cone, 1 dead-ahead
+  double sidestep_lat_scale;  // lateral offset (sin of angle) at which the side choice saturates
+  double sidestep_bias;       // tie-break when the neighbor is dead-ahead: +1 = pass on the right
+  double repel_strength, repel_strength_falloff;
+  double preferred_walk_speed, min_walk_speed, max_walk_speed;
   double relaxation_time;
 };
 

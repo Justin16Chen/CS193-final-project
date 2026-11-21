@@ -74,17 +74,23 @@ private:
 
   SpawnData get_spawn_data() {
     declare_parameter("num_agents", 5);
+    declare_parameter("crowd.spawn_left_right", true);
+    declare_parameter("crowd.spawn_top_bottom", true);
     declare_parameter("crowd.spawn_x_min", -10.);
     declare_parameter("crowd.spawn_y_min", -10.);
     declare_parameter("crowd.spawn_x_max", 10.);
     declare_parameter("crowd.spawn_y_max", 10.);
     int num_agents = get_parameter("num_agents").as_int();
+    bool spawn_left_right = get_parameter("crowd.spawn_left_right").as_bool();
+    bool spawn_top_bottom = get_parameter("crowd.spawn_top_bottom").as_bool();
     double spawn_x_min = get_parameter("crowd.spawn_x_min").as_double();
     double spawn_y_min = get_parameter("crowd.spawn_y_min").as_double();
     double spawn_x_max = get_parameter("crowd.spawn_x_max").as_double();
     double spawn_y_max = get_parameter("crowd.spawn_y_max").as_double();
     return SpawnData{
       .num_agents = num_agents,
+      .spawn_left_right = spawn_left_right,
+      .spawn_top_bottom = spawn_top_bottom,
       .spawn_x_min = spawn_x_min,
       .spawn_x_max = spawn_x_max,
       .spawn_y_min = spawn_y_min,
@@ -96,18 +102,28 @@ private:
     declare_parameter("sfm.person_height", 1.7);
     declare_parameter("sfm.avoid_radius", 1.5);
     declare_parameter("sfm.anisotropy", 0.1);
+    declare_parameter("sfm.sidestep", 0.2);
+    declare_parameter("sfm.sidestep_cone", 0.7);
+    declare_parameter("sfm.sidestep_lat_scale", 0.3);
+    declare_parameter("sfm.sidestep_bias", 1.0);
     declare_parameter("sfm.repel_strength", 1.);
     declare_parameter("sfm.repel_strength_falloff", 0.3);
     declare_parameter("sfm.preferred_walk_speed", 1.);
+    declare_parameter("sfm.min_walk_speed", 0.2);
     declare_parameter("sfm.max_walk_speed", 1.);
     declare_parameter("sfm.relaxation_time", 0.5);
     double repel_strength = get_parameter("sfm.repel_strength").as_double();
     double repel_strength_falloff = get_parameter("sfm.repel_strength_falloff").as_double();
     double anisotropy = get_parameter("sfm.anisotropy").as_double();
+    double sidestep = get_parameter("sfm.sidestep").as_double();
+    double sidestep_cone = get_parameter("sfm.sidestep_cone").as_double();
+    double sidestep_lat_scale = get_parameter("sfm.sidestep_lat_scale").as_double();
+    double sidestep_bias = get_parameter("sfm.sidestep_bias").as_double();
     double person_radius = get_parameter("sfm.person_radius").as_double();
     double person_height = get_parameter("sfm.person_height").as_double();
     double avoid_radius = get_parameter("sfm.avoid_radius").as_double();
     double preferred_walk_speed = get_parameter("sfm.preferred_walk_speed").as_double();
+    double min_walk_speed = get_parameter("sfm.min_walk_speed").as_double();
     double max_walk_speed = get_parameter("sfm.max_walk_speed").as_double();
     double relaxation_time = get_parameter("sfm.relaxation_time").as_double();
     return AgentData{
@@ -115,9 +131,14 @@ private:
       .person_height = person_height,
       .avoid_radius = avoid_radius,
       .anisotropy = anisotropy,
+      .sidestep = sidestep,
+      .sidestep_cone = sidestep_cone,
+      .sidestep_lat_scale = sidestep_lat_scale,
+      .sidestep_bias = sidestep_bias,
       .repel_strength = repel_strength,
       .repel_strength_falloff = repel_strength_falloff,
       .preferred_walk_speed = preferred_walk_speed,
+      .min_walk_speed = min_walk_speed,
       .max_walk_speed = max_walk_speed,
       .relaxation_time = relaxation_time
     };
