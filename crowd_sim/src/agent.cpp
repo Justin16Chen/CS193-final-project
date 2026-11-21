@@ -92,7 +92,7 @@ void spawn_agents(SpawnData& spawn_data, AgentData &agent_data, std::vector<Agen
   if (!spawn_data.spawn_left_right && !spawn_data.spawn_top_bottom)
     return;
 
-  static int id = 0;
+  static int id = 1;
   double x_range = spawn_data.spawn_x_max - spawn_data.spawn_x_min;
   double y_range = spawn_data.spawn_y_max - spawn_data.spawn_y_min;
   for (int i = 0; i < spawn_data.num_agents; i++) {
@@ -175,12 +175,27 @@ void change_agent_goal(SpawnData spawn_data, Agent& agent) {
   }
 }
 
+Agent create_robot_agent(AgentData data, Vector2d robot_pos) {
+  return Agent{
+    .id = 0,
+    .pos = robot_pos,
+    .vel = Vector2d::Zero(),
+    .goal = Vector2d::Zero(),
+    .radius = data.robot_avoid_radius,
+    .avoid_radius = data.robot_avoid_radius,
+    .anisotropy = 0,
+    .repel_strength = 0
+  };
+}
+
 // takes dt in seconds
 void update_agents(SpawnData spawn_data, AgentData data, std::vector<Agent>& agents, double dt) {
   // calculate all accelerations
   std::vector<Vector2d> accels(agents.size(), Vector2d::Zero());
   for (size_t i = 0; i < agents.size(); i++) {
     Agent& a = agents[i];
+    if (AGENT_IS_ROBOT(a))
+      continue;
     Vector2d agent_to_goal = a.goal - a.pos;
     if (agent_to_goal.norm() < 0.2) {
       change_agent_goal(spawn_data, a);
@@ -224,6 +239,8 @@ void update_agents(SpawnData spawn_data, AgentData data, std::vector<Agent>& age
   // update velocity and position using acceleration
   for (size_t i = 0; i < agents.size(); i++) {
     Agent& a = agents[i];
+    if (AGENT_IS_ROBOT(a))
+      continue;
     a.vel += accels[i] * dt;
     double mag = a.vel.norm();
     double new_mag = std::clamp(mag, data.min_walk_speed, data.max_walk_speed);
@@ -237,6 +254,8 @@ void update_agents(SpawnData spawn_data, AgentData data, std::vector<Agent>& age
 void update_agents_gazebo(shared_ptr<rclcpp::Client<SetEntityPose>>& client,
                           const std::vector<Agent>& agents) {
   for (const Agent& agent : agents) {
+    if (AGENT_IS_ROBOT(agent))
+      continue;
     auto request = make_set_pose_request(agent);
     client->async_send_request(request,
       [id = agent.id] (rclcpp::Client<SetEntityPose>::SharedFuture f) {
@@ -253,8 +272,11 @@ void publish_agent_markers(rclcpp::Time time, const AgentData& agent_data, std::
   MarkerArray people_markers;
   MarkerArray arrow_markers;
   for (Agent a : agents) {
-    people_markers.markers.push_back(create_marker_cylinder(a.id, time, a.pos, agent_data.person_radius, agent_data.person_height));
-    arrow_markers.markers.push_back(create_marker_arrow(a.id, time, a.pos, a.goal));
+    int r = AGENT_IS_ROBOT(a) ? 0 : 1;
+    int g = AGENT_IS_ROBOT(a) ? 0 : 0;
+    int b = AGENT_IS_ROBOT(a) ? 1 : 0;
+    people_markers.markers.push_back(create_marker_cylinder(a.id, time, a.pos, a.radius, agent_data.person_height, r, g, b));
+    arrow_markers.markers.push_back(create_marker_arrow(a.id, time, a.pos, a.goal, r, g, b));
   }
   people_pub->publish(people_markers);
   arrow_pub->publish(arrow_markers);

@@ -4,14 +4,13 @@
 #include "crowd_sim/agent.hpp"
 #include "crowd_sim/rviz_helper.hpp"
 #include "ros_gz_interfaces/srv/spawn_entity.hpp"
-
-#include <time.h>
-#include <algorithm>
+#include "nav_msgs/msg/odometry.hpp"
 
 using rclcpp::Node;
 using rclcpp::duration;
 using rclcpp::TimerBase;
 using rclcpp::Publisher;
+using rclcpp::Subscription;
 using std::shared_ptr;
 using std::make_shared;
 using crowd_interfaces::msg::PersonArray;
@@ -19,6 +18,8 @@ using crowd_interfaces::msg::Person;
 using visualization_msgs::msg::MarkerArray;
 using visualization_msgs::msg::Marker;
 using ros_gz_interfaces::srv::SpawnEntity;
+using nav_msgs::msg::Odometry;
+using Eigen::Vector2d;
 
 class Crowd : public Node {
 public:
@@ -30,6 +31,10 @@ public:
     crowd_pub_ = create_publisher<PersonArray>("people", 10);
     people_marker_pub_ = create_publisher<MarkerArray>("people_markers", 10);
     arrow_marker_pub_ = create_publisher<MarkerArray>("arrow_markers", 10);
+    robot_imu_sub_ = create_subscription<Odometry>("model/robot/odometry", 10, [this] (const Odometry& odo) {
+      robot_pos_.x() = odo.pose.pose.position.x;
+      robot_pos_.y() = odo.pose.pose.position.y;
+    });
 
     SpawnData spawn_data = get_spawn_data();
     AgentData agent_data = get_agent_data();
@@ -48,6 +53,7 @@ public:
       double dt = std::clamp((t - last_update_time_).seconds(), 0.0, kMaxDt);
       last_update_time_ = t;
 
+      agents_.push_back(create_robot_agent(agent_data, robot_pos_)); // add the robot to the algorithm using its current position
       if (dt > 0.0) {
         update_agents(spawn_data, agent_data, agents_, dt);
         update_agents_gazebo(set_pose_client_, agents_);
@@ -55,6 +61,8 @@ public:
       PersonArray people = agents_to_people(agents_);
       crowd_pub_->publish(people);
       publish_agent_markers(t, agent_data, agents_, people_marker_pub_, arrow_marker_pub_);
+
+      agents_.pop_back(); // remove the robot
     });
   }
 
@@ -66,7 +74,9 @@ private:
   shared_ptr<Publisher<PersonArray>> crowd_pub_;
   shared_ptr<Publisher<MarkerArray>> people_marker_pub_;
   shared_ptr<Publisher<MarkerArray>> arrow_marker_pub_;
+  shared_ptr<Subscription<Odometry>> robot_imu_sub_;
 
+  Vector2d robot_pos_;
   std::vector<Agent> agents_;
 
   shared_ptr<rclcpp::Client<SpawnEntity>> spawn_client_;
@@ -101,6 +111,7 @@ private:
     declare_parameter("sfm.person_radius", 0.2);
     declare_parameter("sfm.person_height", 1.7);
     declare_parameter("sfm.avoid_radius", 1.5);
+    declare_parameter("sfm.robot_avoid_radius", 1.5);
     declare_parameter("sfm.anisotropy", 0.1);
     declare_parameter("sfm.sidestep", 0.2);
     declare_parameter("sfm.sidestep_cone", 0.7);
@@ -122,6 +133,7 @@ private:
     double person_radius = get_parameter("sfm.person_radius").as_double();
     double person_height = get_parameter("sfm.person_height").as_double();
     double avoid_radius = get_parameter("sfm.avoid_radius").as_double();
+    double robot_avoid_radius = get_parameter("sfm.robot_avoid_radius").as_double();
     double preferred_walk_speed = get_parameter("sfm.preferred_walk_speed").as_double();
     double min_walk_speed = get_parameter("sfm.min_walk_speed").as_double();
     double max_walk_speed = get_parameter("sfm.max_walk_speed").as_double();
@@ -130,6 +142,7 @@ private:
       .person_radius = person_radius,
       .person_height = person_height,
       .avoid_radius = avoid_radius,
+      .robot_avoid_radius = robot_avoid_radius,
       .anisotropy = anisotropy,
       .sidestep = sidestep,
       .sidestep_cone = sidestep_cone,

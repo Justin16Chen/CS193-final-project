@@ -7,7 +7,7 @@
 using visualization_msgs::msg::Marker;
 using geometry_msgs::msg::Point;
 
-Marker create_marker_cylinder(int id, rclcpp::Time time, const Eigen::Vector2d& pos, double radius, double height) {
+Marker create_marker_cylinder(int id, rclcpp::Time time, const Eigen::Vector2d& pos, double radius, double height, int r, int g, int b) {
   Marker m;
   m.header.frame_id = "odom";
   m.header.stamp = time;
@@ -22,14 +22,14 @@ Marker create_marker_cylinder(int id, rclcpp::Time time, const Eigen::Vector2d& 
   m.scale.x = radius * 2;
   m.scale.y = radius * 2;
   m.scale.z = height;
-  m.color.r = 1;
-  m.color.g = 0;
-  m.color.b = 0;
+  m.color.r = r;
+  m.color.g = g;
+  m.color.b = b;
   m.color.a = 1;
   return m;
 }
 
-Marker create_marker_arrow(int id, rclcpp::Time time, const Eigen::Vector2d& from, const Eigen::Vector2d& to) {
+Marker create_marker_arrow(int id, rclcpp::Time time, const Eigen::Vector2d& from, const Eigen::Vector2d& to, int r, int g, int b) {
   Marker m;
   m.header.frame_id = "odom";
   m.header.stamp = time;
@@ -47,7 +47,7 @@ Marker create_marker_arrow(int id, rclcpp::Time time, const Eigen::Vector2d& fro
   m.scale.y = 0.1;    // head diameter
   m.scale.z = 0.1;    // head length
 
-  m.color.r = 1.0; m.color.g = 0.2; m.color.b = 0.2;
+  m.color.r = r; m.color.g = g; m.color.b = b;
   m.color.a = 1.0;    // if alpha is 0, the arrow is invisible
 
   m.pose.orientation.w = 1.0;  // avoids an invalid-quaternion warning

@@ -2,30 +2,42 @@ crowd:
   ros__parameters:
     use_sim_time: true
     update_frequency: 20.0
-    num_agents: 15
+    num_agents: 7
 
     # spawn region (crowd.spawn_*)
     crowd:
       spawn_left_right: true
-      spawn_top_bottom: true 
+      spawn_top_bottom: false 
       spawn_x_min: -5.0
       spawn_x_max: 5.0
       spawn_y_min: -5.0
       spawn_y_max: 5.0
 
     # social force model (sfm.*)
+    # Each agent feels a goal force (steer toward preferred speed at the goal)
+    # plus an exponential repulsion from every other agent. Repulsion is
+    # weakened for agents behind (anisotropy) and augmented by a lateral
+    # sidestep for agents ahead so head-on pairs pass instead of deadlocking.
     sfm:
-      person_radius: 0.2
-      person_height: 1.
-      avoid_radius: 0.65
-      anisotropy: 0.2
-      sidestep: 0.3
-      sidestep_cone: 0.6
-      sidestep_lat_scale: 0.3
-      sidestep_bias: 1.0
-      repel_strength: 0.75
-      repel_strength_falloff: 0.4
-      preferred_walk_speed: 1.3
-      min_walk_speed: 0.15
-      max_walk_speed: 1.6
-      relaxation_time: 0.4
+      # --- body geometry (meters) ---
+      person_radius: 0.2          # physical body radius; used for the Gazebo cylinder and RViz marker
+      person_height: 1.           # physical body height; drawing only, no effect on motion
+      avoid_radius: 0.65          # personal-space radius; repulsion kicks in when two agents' avoid radii overlap
+      robot_avoid_radius: 0.85    # avoid radius people assign to the robot (larger -> wider berth around it)
+
+      # --- repulsion shaping ---
+      anisotropy: 0.2             # 0..1 weight for agents directly behind (1 = isotropic, 0 = ignore what's behind)
+      repel_strength: 0.75        # m/s^2 of repulsion when avoid radii exactly touch; scales the whole exponential
+      repel_strength_falloff: 0.4 # m; e-folding distance of the exponential (smaller = sharper, shorter-range push)
+
+      # --- lateral sidestep (breaks symmetric head-on jams) ---
+      sidestep: 0.4               # lateral steering magnitude relative to the radial push (0 disables)
+      sidestep_cone: 0.6          # cos of half-angle; sidestep is 0 for neighbors outside this cone, 1 dead-ahead (0.6 ~ 53 deg)
+      sidestep_lat_scale: 0.3     # sin of lateral offset at which the pass-side choice saturates (0.3 ~ 17 deg)
+      sidestep_bias: 1.0          # tie-break when a neighbor is dead-ahead: +1 pass on the right, -1 on the left
+
+      # --- walking speeds (m/s) and goal response ---
+      preferred_walk_speed: 1.3   # speed the goal force drives toward when unobstructed
+      min_walk_speed: 0.15        # speed floor after integration; keeps agents from freezing in a cluster
+      max_walk_speed: 1.6         # speed ceiling after integration
+      relaxation_time: 0.4        # s; how quickly velocity relaxes toward the preferred velocity (smaller = snappier)

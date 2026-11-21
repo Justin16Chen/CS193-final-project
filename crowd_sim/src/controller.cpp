@@ -1,5 +1,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
+#include "sensor_msgs/msg/imu.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 
 #include <memory.h>
@@ -12,9 +13,9 @@
 #define INITIAL_FWD_SPEED (0.5)
 
 using namespace rclcpp;
-using namespace sensor_msgs::msg;
-using namespace geometry_msgs::msg;
-using namespace std::chrono;
+using sensor_msgs::msg::LaserScan;
+using sensor_msgs::msg::Imu;
+using geometry_msgs::msg::Twist;
 
 class Controller : public Node {
 public:
@@ -32,7 +33,7 @@ public:
           double range = scan.ranges[i];
           if (range < DIST_TO_STOP) {
             less_than_range = true;
-            this->stop();
+            //this->stop();
             break;
           }
         }

@@ -34,6 +34,7 @@ def generate_launch_description():
         arguments=[
           '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
           '/lidar@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
+          '/model/robot/odometry@nav_msgs/msg/Odometry[gz.msgs.Odometry',
           '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',
           '/world/crowd_world/create@ros_gz_interfaces/srv/SpawnEntity',
           '/world/crowd_world/set_pose@ros_gz_interfaces/srv/SetEntityPose',
@@ -46,7 +47,7 @@ def generate_launch_description():
     controller_node = Node(
         package='crowd_sim',
         executable='controller',
-        parameters=[{'use_sim_time': True}, {'print_scans': True}],
+        parameters=[{'use_sim_time': True}, {'print_scans': False}],
         output='screen',
     )
 

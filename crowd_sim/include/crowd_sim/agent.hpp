@@ -18,12 +18,15 @@ using std::shared_ptr;
 using ros_gz_interfaces::srv::SpawnEntity;
 using ros_gz_interfaces::srv::SetEntityPose;
 using ros_gz_interfaces::msg::Entity;
+using Eigen::Vector2d;
+
+#define AGENT_IS_ROBOT(a) ((a).id == 0)
 
 struct Agent {
   uint32_t id;
-  Eigen::Vector2d pos;
-  Eigen::Vector2d vel;
-  Eigen::Vector2d goal;
+  Vector2d pos;
+  Vector2d vel;
+  Vector2d goal;
   double radius, avoid_radius;
   double anisotropy;
   double repel_strength;
@@ -37,9 +40,9 @@ struct SpawnData {
 };
 
 struct AgentData {
-  double person_radius;   // physical body radius, used for drawing
-  double person_height;   // physical body height, used for drawing
-  double avoid_radius;    // social-force personal-space radius
+  double person_radius;                       // physical body radius, used for drawing
+  double person_height;                       // physical body height, used for drawing
+  double avoid_radius, robot_avoid_radius;    // social-force personal-space radius
   double anisotropy;
   double sidestep;            // lateral steering strength relative to the radial repulsion
   double sidestep_cone;       // cos of half-angle: sidestep is 0 outside this cone, 1 dead-ahead
@@ -53,6 +56,8 @@ struct AgentData {
 crowd_interfaces::msg::Person agent_to_person(Agent& agent);
 
 crowd_interfaces::msg::PersonArray agents_to_people(std::vector<Agent>& agents);
+
+Agent create_robot_agent(AgentData data, Vector2d robot_pos);
 
 void spawn_agents(SpawnData& spawn_data, AgentData& agent_data, std::vector<Agent>& agents);
 
