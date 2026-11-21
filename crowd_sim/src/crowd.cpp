@@ -26,7 +26,9 @@ public:
   Crowd() : Node("crowd") {
     srand(time(NULL));
     declare_parameter("update_frequency", 20.);
+    declare_parameter("crowd.avoid_robot", false);
     double update_period_sec = 1.0 / get_parameter("update_frequency").as_double();
+    bool crowd_avoid_robot = get_parameter("crowd.avoid_robot").as_bool();
 
     crowd_pub_ = create_publisher<PersonArray>("people", 10);
     people_marker_pub_ = create_publisher<MarkerArray>("people_markers", 10);
@@ -48,12 +50,13 @@ public:
 
     last_update_time_ = now();
     auto update_period = duration<double>(update_period_sec);
-    update_timer_ = create_wall_timer(update_period, [this, spawn_data, agent_data] () {
+    update_timer_ = create_wall_timer(update_period, [this, spawn_data, agent_data, crowd_avoid_robot] () {
       rclcpp::Time t = now();
       double dt = std::clamp((t - last_update_time_).seconds(), 0.0, kMaxDt);
       last_update_time_ = t;
 
-      agents_.push_back(create_robot_agent(agent_data, robot_pos_)); // add the robot to the algorithm using its current position
+      if (crowd_avoid_robot)
+        agents_.push_back(create_robot_agent(agent_data, robot_pos_)); // add the robot to the algorithm using its current position
       if (dt > 0.0) {
         update_agents(spawn_data, agent_data, agents_, dt);
         update_agents_gazebo(set_pose_client_, agents_);
@@ -62,7 +65,8 @@ public:
       crowd_pub_->publish(people);
       publish_agent_markers(t, agent_data, agents_, people_marker_pub_, arrow_marker_pub_);
 
-      agents_.pop_back(); // remove the robot
+      if (crowd_avoid_robot)
+        agents_.pop_back(); // remove the robot
     });
   }
 
