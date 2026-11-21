@@ -8,7 +8,6 @@ Panels:
         - /Status1
         - /MarkerArray1
         - /MarkerArray2
-        - /MarkerArray2/Status1
       Splitter Ratio: 0.5
     Tree Height: 428
   - Class: rviz_common/Selection
@@ -74,6 +73,18 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /arrow_markers
       Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MarkerArray
+      Namespaces:
+        arrows: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /lidar_distances
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -120,7 +131,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 34.38617706298828
+      Distance: 13.978198051452637
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -135,10 +146,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6153981685638428
+      Pitch: 0.9303980469703674
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.2353976964950562
+      Yaw: 3.035397529602051
     Saved: ~
 Window Geometry:
   Displays:
@@ -156,5 +167,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1268
-  X: 1920
-  Y: 0
+  X: 1888
+  Y: -32

@@ -13,6 +13,8 @@ def build_sdf(world_yaml_path, template_path, output_path):
     with open(world_yaml_path) as f:
         world = yaml.safe_load(f)['world']
 
+    init_pos = [float(v) for v in world['initial_robot_position']]
+    init_yaw = float(world['initial_robot_yaw'])
     x_min = float(world['x_min'])
     x_max = float(world['x_max'])
     y_min = float(world['y_min'])
@@ -36,6 +38,7 @@ def build_sdf(world_yaml_path, template_path, output_path):
             west_pose=f"{x_min - t / 2} {y_mid} {z} 0 0 0",
             north_south_size=f"{width + 2 * t} {t} {h}",
             east_west_size=f"{t} {length} {h}",
+            initial_robot_pose=f'{init_pos[0]} {init_pos[1]} 0 0 0 {init_yaw}',
         )
 
     with open(output_path, 'w') as f:

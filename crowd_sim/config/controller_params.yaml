@@ -1,0 +1,5 @@
+controller:
+  ros__parameters:
+    start_x: -5.5
+    start_y: 0.
+    start_yaw: 0.

@@ -2,6 +2,8 @@
 # This is NOT a ROS params file: rcl rejects any top-level key without ros__parameters,
 # so it must stay separate from sim_params.yaml.
 world:
+  initial_robot_position: [-5.5, 0.]
+  initial_robot_yaw: 0
   x_min: -6.0
   x_max: 6.0
   y_min: -6.0

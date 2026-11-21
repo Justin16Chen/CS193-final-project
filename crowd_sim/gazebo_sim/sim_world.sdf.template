@@ -132,7 +132,7 @@
       </model>
 
       <model name="robot" canonical_link="chassis">
-        <pose relative_to="world">0 0 0.1667 0 0 0</pose>
+        <pose relative_to="world">$initial_robot_pose</pose>
 
         <frame name="lidar_frame" attached_to="chassis">
           <pose relative_to="chassis">0 0 0.3333 0 0 0</pose>
@@ -188,7 +188,7 @@
             <ray>
               <scan>
                 <horizontal>
-                  <samples>640</samples>
+                  <samples>160</samples>
                   <resolution>1</resolution>
                   <min_angle>-1.396263</min_angle>
                   <max_angle>1.396263</max_angle>

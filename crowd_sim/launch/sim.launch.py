@@ -9,7 +9,8 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     pkg_share = get_package_share_directory('crowd_sim')
-    params_file = os.path.join(pkg_share, 'config', 'sim_params.yaml')
+    crowd_params_file = os.path.join(pkg_share, 'config', 'crowd_params.yaml')
+    controller_params_file = os.path.join(pkg_share, 'config', 'controller_params.yaml')
     world_file = os.path.join(pkg_share, 'config', 'world.yaml')
     template_path = os.path.join(pkg_share, 'gazebo_sim', 'sim_world.sdf.template')
     # the generated world goes to a writable temp dir, not the install tree
@@ -47,14 +48,14 @@ def generate_launch_description():
     controller_node = Node(
         package='crowd_sim',
         executable='controller',
-        parameters=[{'use_sim_time': True}, {'print_scans': False}],
+        parameters=[{'use_sim_time': True}, controller_params_file],
         output='screen',
     )
 
     crowd_node = Node(
         package='crowd_sim',
         executable='crowd',
-        parameters=[params_file],
+        parameters=[crowd_params_file],
         output='screen'
     )
 

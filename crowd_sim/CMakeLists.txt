@@ -18,6 +18,8 @@ find_package(visualization_msgs REQUIRED)
 find_package(crowd_interfaces REQUIRED)
 find_package(ros_gz_interfaces REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 # uncomment the following section in order to fill in
 # further dependencies manually.
@@ -35,8 +37,8 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-add_executable(controller src/controller.cpp)
-ament_target_dependencies(controller rclcpp sensor_msgs geometry_msgs)
+add_executable(controller src/controller.cpp src/rviz_helper.cpp)
+ament_target_dependencies(controller rclcpp sensor_msgs geometry_msgs visualization_msgs nav_msgs tf2 tf2_geometry_msgs)
 target_link_libraries(controller Eigen3::Eigen)
 target_include_directories(controller PRIVATE include)
 
