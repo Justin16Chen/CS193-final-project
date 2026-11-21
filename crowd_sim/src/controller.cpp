@@ -101,9 +101,13 @@ public:
     );
   }
 
-  // TODO: use ros2 TF tree to get this
   Pose get_robot_pose() {
-    return odo_pose_;
+    tf2::Transform t_init, t_odo;
+    tf2::fromMsg(initial_pose_, t_init);
+    tf2::fromMsg(odo_pose_, t_odo);
+    Pose out;
+    tf2::toMsg(t_init * t_odo, out);
+    return out;
   }
 private:
   shared_ptr<Subscription<LaserScan>> scan_sub_;
