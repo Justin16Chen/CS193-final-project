@@ -270,6 +270,7 @@ void update_agents_gazebo(shared_ptr<rclcpp::Client<SetEntityPose>>& client,
 void publish_agent_markers(rclcpp::Time time, const AgentData& agent_data, std::vector<Agent>& agents,
                            shared_ptr<Publisher<MarkerArray>> people_pub,
                            shared_ptr<Publisher<MarkerArray>> arrow_pub) {
+                            
   MarkerArray people_markers;
   MarkerArray arrow_markers;
   people_markers.markers.push_back(create_clear_marker("people", time));
