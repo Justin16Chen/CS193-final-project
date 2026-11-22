@@ -68,7 +68,6 @@ public:
         lidar_pub_->publish(create_lidar_markers(raw_scan, now(), robot_pose));
 
         std::vector<Vector2d> est_agent_pos = estimate_agent_positions(raw_scan, est_params, robot_pose);
-        //RCLCPP_INFO(get_logger(), "num est positions: %d\n", (int)est_agent_pos.size());
         est_agent_pos_pub_->publish(create_est_position_markers(est_agent_pos, now()));
       }
     );

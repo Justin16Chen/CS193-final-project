@@ -272,6 +272,8 @@ void publish_agent_markers(rclcpp::Time time, const AgentData& agent_data, std::
                            shared_ptr<Publisher<MarkerArray>> arrow_pub) {
   MarkerArray people_markers;
   MarkerArray arrow_markers;
+  people_markers.markers.push_back(create_clear_marker("people", time));
+  arrow_markers.markers.push_back(create_clear_marker("goals", time));
   for (Agent a : agents) {
     int r = AGENT_IS_ROBOT(a) ? 0 : 1;
     int g = AGENT_IS_ROBOT(a) ? 0 : 0;
@@ -280,9 +282,9 @@ void publish_agent_markers(rclcpp::Time time, const AgentData& agent_data, std::
     Vector3d agent_middle_pos = Vector3d(a.pos.x(), a.pos.y(), agent_data.person_height * 0.5);
     Vector3d agent_ground_pos = Vector3d(a.pos.x(), a.pos.y(), 0);
     Vector3d goal = Vector3d(a.goal.x(), a.goal.y(), 0);
-    people_markers.markers.push_back(create_marker_cylinder(a.id, time, agent_middle_pos, a.radius, 
+    people_markers.markers.push_back(create_marker_cylinder("people", a.id, time, agent_middle_pos, a.radius, 
       agent_data.person_height, color));
-    arrow_markers.markers.push_back(create_marker_arrow(a.id, time, agent_ground_pos, goal, color));
+    arrow_markers.markers.push_back(create_marker_arrow("goals", a.id, time, agent_ground_pos, goal, color));
   }
   people_pub->publish(people_markers);
   arrow_pub->publish(arrow_markers);

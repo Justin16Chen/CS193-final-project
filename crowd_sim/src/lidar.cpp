@@ -27,7 +27,7 @@ MarkerArray create_lidar_markers(const LaserScan& raw_scan, rclcpp::Time time, P
   double yaw = tf2::getYaw(robot_pose.orientation);
   double start_angle = yaw + scan.angle_min;
 
-  marker_array.markers.push_back(create_clear_marker(time));
+  marker_array.markers.push_back(create_clear_marker("lidar_lines", time));
  
   ColorRGBA color = make_color(0.2, 0.8, 0.2, 1);
   for (long unsigned int i = 0; i < scan.ranges.size(); i++) {
@@ -36,7 +36,7 @@ MarkerArray create_lidar_markers(const LaserScan& raw_scan, rclcpp::Time time, P
     double dist = scan.ranges[i];
     Vector3d offset = dir * dist;
     Vector3d end = robot_position + offset;
-    Marker marker = create_marker_arrow(i + 1, time, robot_position, end, color);
+    Marker marker = create_marker_arrow("lidar_lines", i + 1, time, robot_position, end, color);
     marker_array.markers.push_back(marker);
   }
   return marker_array;
@@ -111,14 +111,14 @@ std::vector<Vector2d> estimate_agent_positions(const LaserScan& scan,
 
 MarkerArray create_est_position_markers(std::vector<Vector2d> positions, rclcpp::Time time) {
   MarkerArray markers;
-  markers.markers.push_back(create_clear_marker(time));
+  markers.markers.push_back(create_clear_marker("est_positions", time));
   ColorRGBA color = make_color(0.1, 0.1, 0.9, 0.4);
   double radius = 0.2;
   double height = 1.;
   for (unsigned long int i = 0; i < positions.size(); i++) {
     Vector2d pos = positions[i];
     Vector3d pos3d(pos.x(), pos.y(), height * 0.5);
-    markers.markers.push_back(create_marker_cylinder(i + 1, time, pos3d, radius, height, color));
+    markers.markers.push_back(create_marker_cylinder("est_positions", i + 1, time, pos3d, radius, height, color));
   }
   return markers;
 }

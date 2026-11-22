@@ -13,22 +13,22 @@ ColorRGBA make_color(double r, double g, double b, double a) {
   return color;
 }
 
-Marker create_clear_marker(rclcpp::Time time) {
+Marker create_clear_marker(std::string name, rclcpp::Time time) {
   Marker clear;
   clear.header.frame_id = "odom";
   clear.header.stamp = time;
-  clear.ns = "arrows";
+  clear.ns = name;
   clear.id = 0;
   clear.action = Marker::DELETEALL;
   return clear;
 }
 
-Marker create_marker_cylinder(int id, rclcpp::Time time, const Eigen::Vector3d& pos,
+Marker create_marker_cylinder(std::string name, int id, rclcpp::Time time, const Eigen::Vector3d& pos,
   double radius, double height, ColorRGBA color) {
   Marker m;
   m.header.frame_id = "odom";
   m.header.stamp = time;
-  m.ns = "people";
+  m.ns = name;
   m.id = id;
   m.type = Marker::CYLINDER;
   m.action = Marker::ADD;
@@ -43,12 +43,12 @@ Marker create_marker_cylinder(int id, rclcpp::Time time, const Eigen::Vector3d& 
   return m;
 }
 
-Marker create_marker_arrow(int id, rclcpp::Time time, const Eigen::Vector3d& from,
+Marker create_marker_arrow(std::string name, int id, rclcpp::Time time, const Eigen::Vector3d& from,
   const Eigen::Vector3d& to, ColorRGBA color) {
   Marker m;
   m.header.frame_id = "odom";
   m.header.stamp = time;
-  m.ns = "arrows";
+  m.ns = name;
   m.id = id;                            // same ns+id overwrites the old arrow
   m.type = Marker::ARROW;
   m.action = Marker::ADD;
