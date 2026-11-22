@@ -12,7 +12,8 @@
 #include "ros_gz_interfaces/srv/spawn_entity.hpp"
 #include "ros_gz_interfaces/srv/set_entity_pose.hpp"
 #include "ros_gz_interfaces/msg/entity.hpp"
-
+#include "spawn_data.hpp"
+#include "agent_data.hpp"
 
 using std::shared_ptr;
 using ros_gz_interfaces::srv::SpawnEntity;
@@ -30,27 +31,6 @@ struct Agent {
   double radius, avoid_radius;
   double anisotropy;
   double repel_strength;
-};
-
-struct SpawnData {
-  int num_agents;
-  bool spawn_left_right, spawn_top_bottom;
-  double spawn_x_min, spawn_x_max;
-  double spawn_y_min, spawn_y_max;
-};
-
-struct AgentData {
-  double person_radius;                       // physical body radius, used for drawing
-  double person_height;                       // physical body height, used for drawing
-  double avoid_radius, robot_avoid_radius;    // social-force personal-space radius
-  double anisotropy;
-  double sidestep;            // lateral steering strength relative to the radial repulsion
-  double sidestep_cone;       // cos of half-angle: sidestep is 0 outside this cone, 1 dead-ahead
-  double sidestep_lat_scale;  // lateral offset (sin of angle) at which the side choice saturates
-  double sidestep_bias;       // tie-break when the neighbor is dead-ahead: +1 = pass on the right
-  double repel_strength, repel_strength_falloff;
-  double preferred_walk_speed, min_walk_speed, max_walk_speed;
-  double relaxation_time;
 };
 
 crowd_interfaces::msg::Person agent_to_person(Agent& agent);

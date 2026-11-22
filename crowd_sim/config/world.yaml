@@ -4,9 +4,10 @@
 world:
   initial_robot_position: [-5.5, 0.]
   initial_robot_yaw: 0
-  x_min: -6.0
-  x_max: 6.0
-  y_min: -6.0
-  y_max: 6.0
+  x_min: -15.0
+  x_max: 15.0
+  y_min: -15.0
+  y_max: 15.0
   wall_thickness: 0.2
   wall_height: 3.0
+  build_test_person: false

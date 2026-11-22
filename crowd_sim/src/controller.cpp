@@ -1,11 +1,10 @@
 #include "rclcpp/rclcpp.hpp"
-#include <cmath>
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 #include "visualization_msgs/msg/marker.hpp"
-#include "crowd_sim/rviz_helper.hpp"
+#include "crowd_sim/lidar.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include <tf2/utils.h>
@@ -15,7 +14,6 @@
 #define DEG2RAD(x) (PI * (x) / 180.)
 #define DIST_TO_STOP (1.5)
 #define INITIAL_FWD_SPEED (0.0)
-#define LIDAR_SCAN_HEIGHT (0.4)
 
 using rclcpp::Node;
 using rclcpp::Subscription;
@@ -27,7 +25,6 @@ using std::shared_ptr;
 using visualization_msgs::msg::MarkerArray;
 using visualization_msgs::msg::Marker;
 using nav_msgs::msg::Odometry;
-using Eigen::Vector3d;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Point;
 
@@ -50,41 +47,29 @@ public:
     initial_pose_.orientation.z = std::sin(start_yaw * 0.5);
     initial_pose_.orientation.w = std::cos(start_yaw * 0.5);
 
+    declare_parameter("est_params.max_dist_diff", 0.2);
+    declare_parameter("est_params.agent_width", 0.4);
+    double max_dist_diff = get_parameter("est_params.max_dist_diff").as_double();
+    double agent_width = get_parameter("est_params.agent_width").as_double();
+    EstimationParams est_params = {
+      .max_dist_diff = max_dist_diff,
+      .agent_width = agent_width
+    };
+
     odo_sub_ = create_subscription<Odometry>("model/robot/odometry", 10, [this] (const Odometry& odo) {
       odo_pose_ = odo.pose.pose;
     });
 
+    est_agent_pos_pub_ = create_publisher<MarkerArray>("est_agent_positions", 10);
+
     scan_sub_ = create_subscription<LaserScan>("lidar", 10,
-      [this] (const LaserScan & scan) {
-
-        MarkerArray marker_array;
+      [this, est_params] (const LaserScan & raw_scan) {
         Pose robot_pose = get_robot_pose();
-        Vector3d robot_position = Vector3d(robot_pose.position.x, robot_pose.position.y, LIDAR_SCAN_HEIGHT);
-        double yaw = tf2::getYaw(robot_pose.orientation);
-        double start_angle = yaw + scan.angle_min;
+        lidar_pub_->publish(create_lidar_markers(raw_scan, now(), robot_pose));
 
-        Marker clear;
-        clear.header.frame_id = "odom";
-        clear.header.stamp = now();
-        clear.ns = "arrows";
-        clear.action = Marker::DELETEALL;
-        marker_array.markers.push_back(clear);
-        for (long unsigned int i = 0; i < scan.ranges.size(); i++) {
-          double angle = start_angle + i * scan.angle_increment;
-          Vector3d dir(std::cos(angle), std::sin(angle), 0.);
-          double dist = scan.ranges[i];
-          if (!std::isfinite(dist) || dist > scan.range_max) {
-            dist = scan.range_max;
-          }
-          else if (dist < scan.range_min) {
-            dist = scan.range_min;
-          }
-          Vector3d offset = dir * dist;
-          Vector3d end = robot_position + offset;
-          Marker marker = create_marker_arrow(i, now(), robot_position, end, 0.2, 0.8, 0.2);
-          marker_array.markers.push_back(marker);
-        }
-        lidar_pub_->publish(marker_array);
+        std::vector<Vector2d> est_agent_pos = estimate_agent_positions(raw_scan, est_params, robot_pose);
+        //RCLCPP_INFO(get_logger(), "num est positions: %d\n", (int)est_agent_pos.size());
+        est_agent_pos_pub_->publish(create_est_position_markers(est_agent_pos, now()));
       }
     );
 
@@ -114,6 +99,7 @@ private:
   shared_ptr<Subscription<Odometry>> odo_sub_;
   shared_ptr<Publisher<Twist>> cmd_vel_pub_;
   shared_ptr<Publisher<MarkerArray>> lidar_pub_;
+  shared_ptr<Publisher<MarkerArray>> est_agent_pos_pub_;
   shared_ptr<rclcpp::TimerBase> cmd_vel_timer_;
 
   Pose initial_pose_;

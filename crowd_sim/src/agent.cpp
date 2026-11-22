@@ -4,12 +4,12 @@
 #include "visualization_msgs/msg/marker_array.hpp"
 #include "crowd_sim/rviz_helper.hpp"
 #include "ros_gz_interfaces/srv/spawn_entity.hpp"
+#include "crowd_sim/utils.hpp"
 
 #include <memory>
 #include <algorithm>
 #include <format>
 
-#define ABS(x) ((x) < 0 ? -(x) : (x))
 constexpr double kEpsilon = 1e-4;
 
 using Eigen::Vector2d;
@@ -276,11 +276,13 @@ void publish_agent_markers(rclcpp::Time time, const AgentData& agent_data, std::
     int r = AGENT_IS_ROBOT(a) ? 0 : 1;
     int g = AGENT_IS_ROBOT(a) ? 0 : 0;
     int b = AGENT_IS_ROBOT(a) ? 1 : 0;
+    ColorRGBA color = make_color(r, g, b, 1);
     Vector3d agent_middle_pos = Vector3d(a.pos.x(), a.pos.y(), agent_data.person_height * 0.5);
     Vector3d agent_ground_pos = Vector3d(a.pos.x(), a.pos.y(), 0);
     Vector3d goal = Vector3d(a.goal.x(), a.goal.y(), 0);
-    people_markers.markers.push_back(create_marker_cylinder(a.id, time, agent_middle_pos, a.radius, agent_data.person_height, r, g, b));
-    arrow_markers.markers.push_back(create_marker_arrow(a.id, time, agent_ground_pos, goal, r, g, b));
+    people_markers.markers.push_back(create_marker_cylinder(a.id, time, agent_middle_pos, a.radius, 
+      agent_data.person_height, color));
+    arrow_markers.markers.push_back(create_marker_arrow(a.id, time, agent_ground_pos, goal, color));
   }
   people_pub->publish(people_markers);
   arrow_pub->publish(arrow_markers);

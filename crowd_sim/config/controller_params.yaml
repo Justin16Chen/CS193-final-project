@@ -3,3 +3,7 @@ controller:
     start_x: -5.5
     start_y: 0.
     start_yaw: 0.
+
+    est_params:
+      max_dist_diff: 3.5
+      agent_width: 0.4

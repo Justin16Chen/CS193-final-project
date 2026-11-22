@@ -130,6 +130,7 @@
           </visual>
         </link>
       </model>
+$test_person
 
       <model name="robot" canonical_link="chassis">
         <pose relative_to="world">$initial_robot_pose</pose>
