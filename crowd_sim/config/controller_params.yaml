@@ -7,6 +7,7 @@ controller:
     est_params:
       max_dist_diff: 3.5
       agent_width: 0.4
+      max_position_dist_diff: 0.15
 
     smooth_params:
       # number of past velocity estimates kept for smoothing

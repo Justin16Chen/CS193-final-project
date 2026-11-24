@@ -96,7 +96,7 @@ std::vector<Vector2d> estimate_agent_positions(const LaserScan& scan,
         "dist: %.5lf | delta dist: %.5lf | delta angle: %.5lf | delta dist / delta angle: %.5lf",
         dist, delta_dist, scan.angle_increment, delta_dist_per_angle);
     }
-    if (delta_dist_per_angle > est_params.max_dist_diff) {
+    if (delta_dist_per_angle > est_params.max_lidar_dist_diff) {
       add_est_positions(positions, scan, est_params, lidar_pose, start_idx, i, total_dist);
       start_idx = i;
       total_dist = dist;

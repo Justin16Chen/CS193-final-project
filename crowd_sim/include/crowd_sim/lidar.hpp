@@ -16,8 +16,9 @@ using visualization_msgs::msg::Marker;
 #define VALID_DIST(d, scan) (std::isfinite(d) && (d) <= scan.range_max && (d) >= scan.range_min)
 
 struct EstimationParams {
-  double max_dist_diff;
+  double max_lidar_dist_diff;
   double agent_width;
+  double max_position_dist_diff;
 };
 
 LaserScan clean_lidar_scan(LaserScan raw_scan);

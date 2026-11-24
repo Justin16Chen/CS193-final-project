@@ -52,11 +52,14 @@ public:
 
     declare_parameter("est_params.max_dist_diff", 0.2);
     declare_parameter("est_params.agent_width", 0.4);
+    declare_parameter("est_params.max_position_dist_diff", 0.2);
     double max_dist_diff = get_parameter("est_params.max_dist_diff").as_double();
     double agent_width = get_parameter("est_params.agent_width").as_double();
+    double max_position_dist_diff = get_parameter("est_params.max_position_dist_diff").as_double();
     EstimationParams est_params = {
-      .max_dist_diff = max_dist_diff,
-      .agent_width = agent_width
+      .max_lidar_dist_diff = max_dist_diff,
+      .agent_width = agent_width,
+      .max_position_dist_diff = max_position_dist_diff
     };
 
     declare_parameter("smooth_params.num_prev_vels", 5);
@@ -94,7 +97,7 @@ public:
         vec2d_list est_agent_pos = estimate_agent_positions(raw_scan, est_params, lidar_pose);
         est_agent_pos_pub_->publish(create_est_position_markers(est_agent_pos, now()));
 
-        vec2d_list est_agent_vel = estimate_velocities(prev_agent_pos_, est_agent_pos, dt);
+        vec2d_list est_agent_vel = estimate_velocities(prev_agent_pos_, est_agent_pos, dt, est_params.max_position_dist_diff);
         prev_agent_vels_.push_back(est_agent_vel);
         vec2d_list smoothed_vel = smooth_velocities(prev_agent_vels_, vel_weights_);
         est_agent_vel_pub_->publish(create_velocity_markers(est_agent_pos, smoothed_vel, now()));
