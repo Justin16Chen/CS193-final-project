@@ -37,7 +37,7 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-add_executable(controller src/controller.cpp src/rviz_helper.cpp src/lidar.cpp)
+add_executable(controller src/controller.cpp src/rviz_helper.cpp src/lidar.cpp src/path_planning.cpp)
 ament_target_dependencies(controller rclcpp sensor_msgs geometry_msgs visualization_msgs nav_msgs 
                           tf2 tf2_geometry_msgs)
 target_link_libraries(controller Eigen3::Eigen)

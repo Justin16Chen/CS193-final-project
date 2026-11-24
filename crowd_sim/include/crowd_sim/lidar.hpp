@@ -22,13 +22,13 @@ struct EstimationParams {
 
 LaserScan clean_lidar_scan(LaserScan raw_scan);
 
-MarkerArray create_lidar_markers(const LaserScan& raw_scan, rclcpp::Time time, Pose robot_pose);
+MarkerArray create_lidar_markers(const LaserScan& raw_scan, rclcpp::Time time, Pose lidar_pose);
 
 /*
  * should pass in the raw lidar scan
  * DONT call clean_lidar_scan before passing it into this function
 */
 
-std::vector<Vector2d> estimate_agent_positions(const LaserScan& scan, const EstimationParams& est_params, Pose robot_pose);
+std::vector<Vector2d> estimate_agent_positions(const LaserScan& scan, const EstimationParams& est_params, Pose lidar_pose);
 
 MarkerArray create_est_position_markers(std::vector<Vector2d> positions, rclcpp::Time time);

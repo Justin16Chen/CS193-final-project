@@ -7,6 +7,7 @@
 using Eigen::Vector3d;
 
 #define LIDAR_SCAN_HEIGHT (0.4)
+#define LIDAR_OFFSET  (2 / 3.14159) // average value of sin(theta) over interval [0, pi]
 
 LaserScan clean_lidar_scan(LaserScan raw_scan) {
   for (unsigned long int i = 0; i < raw_scan.ranges.size(); i++) {
@@ -20,11 +21,11 @@ LaserScan clean_lidar_scan(LaserScan raw_scan) {
   return raw_scan;
 }
 
-MarkerArray create_lidar_markers(const LaserScan& raw_scan, rclcpp::Time time, Pose robot_pose) {
+MarkerArray create_lidar_markers(const LaserScan& raw_scan, rclcpp::Time time, Pose lidar_pose) {
   LaserScan scan = clean_lidar_scan(raw_scan);
   MarkerArray marker_array;
-  Vector3d robot_position = Vector3d(robot_pose.position.x, robot_pose.position.y, LIDAR_SCAN_HEIGHT);
-  double yaw = tf2::getYaw(robot_pose.orientation);
+  Vector3d lidar_position = Vector3d(lidar_pose.position.x, lidar_pose.position.y, LIDAR_SCAN_HEIGHT);
+  double yaw = tf2::getYaw(lidar_pose.orientation);
   double start_angle = yaw + scan.angle_min;
 
   marker_array.markers.push_back(create_clear_marker("lidar_lines", time));
@@ -35,18 +36,18 @@ MarkerArray create_lidar_markers(const LaserScan& raw_scan, rclcpp::Time time, P
     Vector3d dir(std::cos(angle), std::sin(angle), 0.);
     double dist = scan.ranges[i];
     Vector3d offset = dir * dist;
-    Vector3d end = robot_position + offset;
-    Marker marker = create_marker_arrow("lidar_lines", i + 1, time, robot_position, end, color);
+    Vector3d end = lidar_position + offset;
+    Marker marker = create_marker_arrow("lidar_lines", i + 1, time, lidar_position, end, color);
     marker_array.markers.push_back(marker);
   }
   return marker_array;
 }
 
 void add_est_positions(std::vector<Vector2d>& positions, const LaserScan& scan, const EstimationParams& est_params,
-  Pose robot_pose, int start_idx, int i, double total_dist) {
+  Pose lidar_pose, int start_idx, int i, double total_dist) {
   int indices = i - start_idx;
   double total_angle = indices * scan.angle_increment;
-  double avg_dist = total_dist / indices + est_params.agent_width * 0.5;
+  double avg_dist = total_dist / indices + est_params.agent_width * 0.5 * LIDAR_OFFSET;
   double arc_length = total_angle * avg_dist;
   double ratio = arc_length / est_params.agent_width;
   int num_agents_in_blob = (int)(ratio + 0.5);
@@ -55,15 +56,15 @@ void add_est_positions(std::vector<Vector2d>& positions, const LaserScan& scan, 
   for (int j = 0; j < num_agents_in_blob; j++) {
     double angle = start_angle + angle_increment * (j + 1);
     Vector2d local_pos(cos(angle) * avg_dist, sin(angle) * avg_dist);
-    double yaw = tf2::getYaw(robot_pose.orientation);
-    Vector2d robot_position = Vector2d(robot_pose.position.x, robot_pose.position.y);
-    Vector2d global_pos = Eigen::Rotation2Dd(yaw) * local_pos + robot_position;
+    double yaw = tf2::getYaw(lidar_pose.orientation);
+    Vector2d lidar_position = Vector2d(lidar_pose.position.x, lidar_pose.position.y);
+    Vector2d global_pos = Eigen::Rotation2Dd(yaw) * local_pos + lidar_position;
     positions.push_back(global_pos);
   }
 }
 
 std::vector<Vector2d> estimate_agent_positions(const LaserScan& scan,
-  const EstimationParams& est_params, Pose robot_pose) {
+  const EstimationParams& est_params, Pose lidar_pose) {
   static int num = 0;
   std::vector<Vector2d> positions;
   if (scan.ranges.size() == 0)
@@ -75,7 +76,7 @@ std::vector<Vector2d> estimate_agent_positions(const LaserScan& scan,
     double dist = scan.ranges[i];
     if (!VALID_DIST(dist, scan)) {
       if (start_idx != -1) {
-        add_est_positions(positions, scan, est_params, robot_pose, start_idx, i, total_dist);
+        add_est_positions(positions, scan, est_params, lidar_pose, start_idx, i, total_dist);
       }
       prev_dist = -1;
       start_idx = -1;
@@ -96,7 +97,7 @@ std::vector<Vector2d> estimate_agent_positions(const LaserScan& scan,
         dist, delta_dist, scan.angle_increment, delta_dist_per_angle);
     }
     if (delta_dist_per_angle > est_params.max_dist_diff) {
-      add_est_positions(positions, scan, est_params, robot_pose, start_idx, i, total_dist);
+      add_est_positions(positions, scan, est_params, lidar_pose, start_idx, i, total_dist);
       start_idx = i;
       total_dist = dist;
     }
@@ -112,7 +113,7 @@ std::vector<Vector2d> estimate_agent_positions(const LaserScan& scan,
 MarkerArray create_est_position_markers(std::vector<Vector2d> positions, rclcpp::Time time) {
   MarkerArray markers;
   markers.markers.push_back(create_clear_marker("est_positions", time));
-  ColorRGBA color = make_color(0.1, 0.1, 0.9, 0.4);
+  ColorRGBA color = make_color(0.1, 0.1, 0.9, 0.7);
   double radius = 0.2;
   double height = 1.;
   for (unsigned long int i = 0; i < positions.size(); i++) {

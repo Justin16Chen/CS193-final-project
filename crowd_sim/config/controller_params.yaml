@@ -7,3 +7,9 @@ controller:
     est_params:
       max_dist_diff: 3.5
       agent_width: 0.4
+
+    smooth_params:
+      # number of past velocity estimates kept for smoothing
+      num_prev_vels: 13
+      # one weight per past estimate, oldest first, newest last; must have num_prev_vels entries
+      weights: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.1, 0.1, 0.1, 0.15, 0.15]

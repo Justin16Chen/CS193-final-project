@@ -189,7 +189,7 @@ $test_person
             <ray>
               <scan>
                 <horizontal>
-                  <samples>160</samples>
+                  <samples>320</samples>
                   <resolution>1</resolution>
                   <min_angle>-1.396263</min_angle>
                   <max_angle>1.396263</max_angle>

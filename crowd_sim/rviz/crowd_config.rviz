@@ -9,9 +9,9 @@ Panels:
         - /MarkerArray1
         - /MarkerArray2
         - /MarkerArray3
-        - /MarkerArray3/Status1
         - /MarkerArray4
         - /MarkerArray4/Topic1
+        - /MarkerArray5
       Splitter Ratio: 0.5
     Tree Height: 428
   - Class: rviz_common/Selection
@@ -78,19 +78,7 @@ Visualization Manager:
         Value: /arrow_markers
       Value: false
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
-      Name: MarkerArray
-      Namespaces:
-        arrows: true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /lidar_distances
-      Value: true
-    - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
+      Enabled: false
       Name: MarkerArray
       Namespaces:
         {}
@@ -99,7 +87,31 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
+        Value: /lidar_distances
+      Value: false
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MarkerArray
+      Namespaces:
+        est_positions: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
         Value: /est_agent_positions
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MarkerArray
+      Namespaces:
+        velocities: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /est_agent_velocities
       Value: true
   Enabled: true
   Global Options:
@@ -147,7 +159,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 21.994966506958008
+      Distance: 17.032901763916016
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -183,5 +195,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1268
-  X: 1940
-  Y: 41
+  X: 1888
+  Y: -32
