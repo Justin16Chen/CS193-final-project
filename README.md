@@ -5,16 +5,16 @@ Creating a robot with a lidar and IMU that can pathfind through an area crowded 
 ROS2 is the industry standard framework for deploying code for robotics system. It consists of a system to publish and subscribe to topics. Gazebo is a widely used simulation that simulates realistic collisions, physics, and sensors. Using ROS2 and Gazebo is a common practice to develop initial software for robotic systems to rapidly test the control systems first in simulation, then on the robot. There are many advantages to this, as you can reproduce many hard to create scenarios in real life very easily in simulation, and you can rapidly develop and debug the code. I want to go into robotics in the future, but the problem is I have never used ROS2 or Gazebo before. This project solves the problem because I will learn a lot more about the 2 systems and how to use them in an actual project.
 
 ## How it works
-Crowd simulation, math helpers, and robot code written in C++
-Robot model (wheels, chassis, lidar sensor, IMU sensor) and walls written in a SDF file
-Crowd geometry dynamically inserted into SDF file
-physics and sensor simulation done in Gazebo (lidar detects where the people are, IMU tracks where robot is)
-C++ code communicates with Gazebo simulation through ROS2-GAZEBO bridge (ROS2 library node)
-parameters I can tune (crowd sim parameters, pathfinding algorithm parameters) stored in .YAML files that the C++ files read
-dependencies and compilation done with XML and CmakeLists.txt files
-RViz (part of the ROS2 library) for visualizing debug information (estimated velocity of each person, for example)
-launch file (to launch ROS2 nodes, gazebo simulation, RViz, and ROS2-GAZEBO bridge) written in python
-bash scripts to simplify process of compiling and running everything
+- Crowd simulation, math helpers, and robot code written in C++
+- Robot model (wheels, chassis, lidar sensor, IMU sensor) and walls written in a SDF file
+- Crowd geometry dynamically inserted into SDF file
+- physics and sensor simulation done in Gazebo (lidar detects where the people are, IMU tracks where robot is)
+- C++ code communicates with Gazebo simulation through ROS2-GAZEBO bridge (ROS2 library node)
+- parameters I can tune (crowd sim parameters, pathfinding algorithm parameters) stored in .YAML files that the C++ files read
+- dependencies and compilation done with XML and CmakeLists.txt files
+- RViz (part of the ROS2 library) for visualizing debug information (estimated velocity of each person, for example)
+- launch file (to launch ROS2 nodes, gazebo simulation, RViz, and ROS2-GAZEBO bridge) written in python
+- bash scripts to simplify process of compiling and running everything
 
 the system diagram is in docs/cs193 project flow diagram.png
 
