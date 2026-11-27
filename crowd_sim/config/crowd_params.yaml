@@ -2,7 +2,7 @@ crowd:
   ros__parameters:
     use_sim_time: true
     update_frequency: 20.0
-    num_agents: 0
+    num_agents: 5
 
     crowd:
       avoid_robot: false

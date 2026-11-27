@@ -26,7 +26,7 @@ controller:
       speed_resolution: 0.1
       max_angular_vel_deg: 40.
       angular_vel_resolution_deg: 2.
-      dist_cost: 2.
-      away_from_goal_cost: 0.2
-      diff_from_prev_output_cost: 0.025
+      dist_cost: 1.5
+      away_from_goal_cost: 0.5
+      diff_from_prev_output_cost: 0.05
       diff_from_preferred_speed_cost: 0.1

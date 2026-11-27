@@ -60,7 +60,7 @@ def build_sdf(world_yaml_path, template_path, output_path):
             west_pose=f"{x_min - t / 2} {y_mid} {z} 0 0 0",
             north_south_size=f"{width + 2 * t} {t} {h}",
             east_west_size=f"{t} {length} {h}",
-            initial_robot_pose=f'{init_pos[0]} {init_pos[1]} 0 0 0 {init_yaw}',
+            initial_robot_pose=f'{init_pos[0]} {init_pos[1]} 0.105 0 0 {init_yaw}',
             test_person=test_person,
         )
 

@@ -87,11 +87,12 @@ public:
 
         ///*
         Twist commanded_output = calculate_output(est_agent_pos, est_agent_vel, predict_params, lidar_pose, goal_position_, prev_output_);
-        //cmd_vel_pub_->publish(commanded_output);
-        Twist test_output;
-        test_output.linear.set__x(1);
-        test_output.angular.set__z(DEG2RAD(20));
-        cmd_vel_pub_->publish(test_output);
+        cmd_vel_pub_->publish(commanded_output);
+        //Twist test_output;
+        //test_output.linear.set__x(1);
+        //test_output.angular.set__z(DEG2RAD(20));
+        //cmd_vel_pub_->publish(test_output);
+        cmd_vel_pub_->publish(commanded_output);
         prev_output_ = commanded_output;
         //*/
       }

@@ -22,10 +22,11 @@ def generate_launch_description():
     build_sdf(world_file, template_path, world_path)
 
     # Start Gazebo using ros_gz_sim's own launch file
+    start_unpaused = False
     gz_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')),
-        launch_arguments={'gz_args': f'-r {world_path}'}.items(),  # -r = start unpaused
+        launch_arguments={'gz_args': f'{'r' if start_unpaused else ' '} {world_path}'}.items(),  # -r = start unpaused
     )
 
     # run ros-gazebo bridge
@@ -55,7 +56,7 @@ def generate_launch_description():
     crowd_node = Node(
         package='crowd_sim',
         executable='crowd',
-        parameters=[crowd_params_file],
+        parameters=[{'use_sim_time': True}, crowd_params_file],
         output='screen'
     )
 
