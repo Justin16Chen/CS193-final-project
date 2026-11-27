@@ -7,6 +7,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
+option(CROWD_SIM_ASAN "Build with AddressSanitizer" OFF)
+if (CROWD_SIM_ASAN)
+  add_compile_options(-fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer -g -O1)
+  add_link_options(-fsanitize=address -fsanitize=undefined)
+endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -35,16 +40,27 @@ if(BUILD_TESTING)
   # a copyright and license is added to all source files
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+  # Pure-math unit tests: no ROS link dependencies, only Eigen.
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_planning_math test/test_planning_math.cpp src/planning_math.cpp)
+  target_include_directories(test_planning_math PRIVATE include)
+  target_link_libraries(test_planning_math Eigen3::Eigen)
 endif()
 
-add_executable(controller src/controller.cpp src/rviz_helper.cpp src/lidar.cpp src/path_planning.cpp)
-ament_target_dependencies(controller rclcpp sensor_msgs geometry_msgs visualization_msgs nav_msgs 
-                          tf2 tf2_geometry_msgs)
+add_executable(controller src/controller.cpp src/rviz_helper.cpp src/lidar.cpp src/path_planning.cpp src/planning_math.cpp)
+ament_target_dependencies(controller
+  rclcpp
+  sensor_msgs geometry_msgs visualization_msgs nav_msgs geometry_msgs
+  tf2 tf2_geometry_msgs)
 target_link_libraries(controller Eigen3::Eigen)
 target_include_directories(controller PRIVATE include)
 
 add_executable(crowd src/crowd.cpp src/agent.cpp src/rviz_helper.cpp)
-ament_target_dependencies(crowd rclcpp crowd_interfaces ros_gz_interfaces visualization_msgs nav_msgs)
+ament_target_dependencies(crowd 
+  rclcpp
+  crowd_interfaces ros_gz_interfaces
+  visualization_msgs nav_msgs)
 target_link_libraries(crowd Eigen3::Eigen)
 target_include_directories(crowd PRIVATE include)
 

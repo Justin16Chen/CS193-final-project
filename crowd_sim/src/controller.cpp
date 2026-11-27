@@ -7,15 +7,11 @@
 #include "crowd_sim/lidar.hpp"
 #include "crowd_sim/path_planning.hpp"
 #include "crowd_sim/utils.hpp"
+#include "crowd_sim/rviz_helper.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include <tf2/utils.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-
-#define PI (3.14159265)
-#define DEG2RAD(x) (PI * (x) / 180.)
-#define DIST_TO_STOP (1.5)
-#define INITIAL_FWD_SPEED (0.0)
 
 using rclcpp::Node;
 using rclcpp::Subscription;
@@ -29,64 +25,46 @@ using visualization_msgs::msg::Marker;
 using nav_msgs::msg::Odometry;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Point;
+using Eigen::Vector3d;
 
 
 class Controller : public Node {
 public:
   Controller() : Node("controller") {
-    cmd_vel_.linear.x = INITIAL_FWD_SPEED;
+    initial_pose_ = get_initial_pose_();
+    goal_position_=  get_goal_position_();
+    EstimationParams est_params = get_estimation_params_();
+    SmoothParams smooth_params = get_smooth_params_();
+    PredictParams predict_params = get_predict_params_();
 
-    declare_parameter("start_x", 0.);
-    declare_parameter("start_y", 0.);
-    declare_parameter("start_yaw", 0.);
-    double start_x = get_parameter("start_x").as_double();
-    double start_y = get_parameter("start_y").as_double();
-    double start_yaw = get_parameter("start_yaw").as_double();
-    initial_pose_.position.x = start_x;
-    initial_pose_.position.y = start_y;
-    initial_pose_.position.z = 0;
-    initial_pose_.orientation.x = 0;
-    initial_pose_.orientation.y = 0;
-    initial_pose_.orientation.z = std::sin(start_yaw * 0.5);
-    initial_pose_.orientation.w = std::cos(start_yaw * 0.5);
-
-    declare_parameter("est_params.max_dist_diff", 0.2);
-    declare_parameter("est_params.agent_width", 0.4);
-    declare_parameter("est_params.max_position_dist_diff", 0.2);
-    double max_dist_diff = get_parameter("est_params.max_dist_diff").as_double();
-    double agent_width = get_parameter("est_params.agent_width").as_double();
-    double max_position_dist_diff = get_parameter("est_params.max_position_dist_diff").as_double();
-    EstimationParams est_params = {
-      .max_lidar_dist_diff = max_dist_diff,
-      .agent_width = agent_width,
-      .max_position_dist_diff = max_position_dist_diff
-    };
-
-    declare_parameter("smooth_params.num_prev_vels", 5);
-    declare_parameter("smooth_params.weights", std::vector<double>{1.0, 1.0, 1.0, 1.0, 1.0});
-    num_prev_vels_ = get_parameter("smooth_params.num_prev_vels").as_int();
-    vel_weights_ = get_parameter("smooth_params.weights").as_double_array();
-    if (num_prev_vels_ < 1) {
-      RCLCPP_WARN(get_logger(), "smooth_params.num_prev_vels must be >= 1, using 1");
-      num_prev_vels_ = 1;
-    }
-    if (vel_weights_.size() != static_cast<size_t>(num_prev_vels_)) {
-      RCLCPP_WARN(get_logger(),
-        "smooth_params.weights has %zu entries but num_prev_vels is %d; using uniform weights",
-        vel_weights_.size(), num_prev_vels_);
-      vel_weights_.assign(num_prev_vels_, 1.0);
-    }
+    lidar_pos_pub_ = create_publisher<Marker>("lidar_position", 10);
+    robot_heading_pub_ = create_publisher<Marker>("robot_heading", 10);
+    goal_pos_pub_= create_publisher<Marker>("goal_position", 10);
 
     odo_sub_ = create_subscription<Odometry>("model/robot/odometry", 10, [this] (const Odometry& odo) {
       odo_pose_ = odo.pose.pose;
+      Pose lidar_pose = get_lidar_pose();
+      Vector3d lidar_position = Vector3d(lidar_pose.position.x, lidar_pose.position.y, 0.);
+      double yaw = tf2::getYaw(odo_pose_.orientation);
+      lidar_pos_pub_->publish(create_marker_cylinder("lidar_position", 0, now(),
+        lidar_position, 0.1, 1.5,
+        make_color(0.2, 0.9, 0.2, 1.)));
+      robot_heading_pub_->publish(create_marker_arrow("robot_heading", 0, now(),
+        lidar_position, lidar_position + Vector3d(cos(yaw), sin(yaw), 0),
+        make_color(0.2, 0.9, 0.2, 1.)));
+      goal_pos_pub_->publish(create_marker_cylinder("goal_position", 0, now(),
+        Vector3d(goal_position_.x(), goal_position_.y(), 0.), 0.1, 1.5,
+        make_color(0.2, 0.2, 0.9, 1.)));
     });
 
     est_agent_pos_pub_ = create_publisher<MarkerArray>("est_agent_positions", 10);
     est_agent_vel_pub_ = create_publisher<MarkerArray>("est_agent_velocities", 10);
+    lidar_pub_ = create_publisher<MarkerArray>("lidar_distances", 10);
+    cmd_vel_pub_ = create_publisher<Twist>("cmd_vel", 10);
 
     last_update_time_ = now();
     scan_sub_ = create_subscription<LaserScan>("lidar", 10,
-      [this, est_params] (const LaserScan & raw_scan) {
+      [this, est_params, smooth_params, predict_params] (const LaserScan & raw_scan) {
         rclcpp::Time t = now();
         double dt = std::clamp((t - last_update_time_).seconds(), 0.0, kMaxDt);
         last_update_time_ = t;
@@ -99,25 +77,23 @@ public:
 
         vec2d_list est_agent_vel = estimate_velocities(prev_agent_pos_, est_agent_pos, dt, est_params.max_position_dist_diff);
         prev_agent_vels_.push_back(est_agent_vel);
-        vec2d_list smoothed_vel = smooth_velocities(prev_agent_vels_, vel_weights_);
+        vec2d_list smoothed_vel = smooth_velocities(prev_agent_vels_, smooth_params);
         est_agent_vel_pub_->publish(create_velocity_markers(est_agent_pos, smoothed_vel, now()));
 
         prev_agent_pos_ = est_agent_pos;
-        if (prev_agent_vels_.size() > static_cast<size_t>(num_prev_vels_)) {
+        if (prev_agent_vels_.size() > smooth_params.weights.size()) {
           prev_agent_vels_.erase(prev_agent_vels_.begin());
         }
-      }
-    );
 
-    cmd_vel_pub_ = create_publisher<Twist>("cmd_vel", 10);
-    lidar_pub_ = create_publisher<MarkerArray>("lidar_distances", 10);
-
-    declare_parameter("controller_frequency", 20.0);
-    double period_sec = 1. / get_parameter("controller_frequency").as_double();
-    auto period_nano = rclcpp::duration_cast<rclcpp::nanoseconds>(rclcpp::duration<double>(period_sec));
-    cmd_vel_timer_ = create_wall_timer(period_nano,
-      [this] () {
-        cmd_vel_pub_->publish(cmd_vel_);
+        ///*
+        Twist commanded_output = calculate_output(est_agent_pos, est_agent_vel, predict_params, lidar_pose, goal_position_, prev_output_);
+        //cmd_vel_pub_->publish(commanded_output);
+        Twist test_output;
+        test_output.linear.set__x(1);
+        test_output.angular.set__z(DEG2RAD(20));
+        cmd_vel_pub_->publish(test_output);
+        prev_output_ = commanded_output;
+        //*/
       }
     );
   }
@@ -154,25 +130,91 @@ private:
   shared_ptr<Publisher<MarkerArray>> lidar_pub_;
   shared_ptr<Publisher<MarkerArray>> est_agent_pos_pub_;
   shared_ptr<Publisher<MarkerArray>> est_agent_vel_pub_;
-  shared_ptr<rclcpp::TimerBase> cmd_vel_timer_;
+  shared_ptr<Publisher<Marker>> lidar_pos_pub_;
+  shared_ptr<Publisher<Marker>> robot_heading_pub_;
+  shared_ptr<Publisher<Marker>> goal_pos_pub_;
 
   rclcpp::Time last_update_time_;
   Pose initial_pose_;
+  Vector2d goal_position_;
   Pose odo_pose_;
-  Twist cmd_vel_;
   bool prev_less_than_range = false;
   vec2d_list prev_agent_pos_;
   std::vector<vec2d_list> prev_agent_vels_;
-  int num_prev_vels_ = 5;
-  std::vector<double> vel_weights_;
+  Twist prev_output_;
 
-  void stop() {
-    cmd_vel_.linear.x = 0;
-    cmd_vel_.linear.y = 0;
-    cmd_vel_.linear.z = 0;
-    cmd_vel_.angular.x = 0;
-    cmd_vel_.angular.y = 0;
-    cmd_vel_.angular.z = 0;
+  Pose get_initial_pose_() {
+    declare_parameter("start_x", 0.);
+    declare_parameter("start_y", 0.);
+    declare_parameter("start_yaw", 0.);
+    double start_x = get_parameter("start_x").as_double();
+    double start_y = get_parameter("start_y").as_double();
+    double start_yaw = get_parameter("start_yaw").as_double();
+    Pose initial_pose;
+    initial_pose.position.x = start_x;
+    initial_pose.position.y = start_y;
+    initial_pose.position.z = 0;
+    initial_pose.orientation.x = 0;
+    initial_pose.orientation.y = 0;
+    initial_pose.orientation.z = std::sin(start_yaw * 0.5);
+    initial_pose.orientation.w = std::cos(start_yaw * 0.5);
+    return initial_pose;
+  }
+  Vector2d get_goal_position_() {
+    declare_parameter("goal_x", 0.);
+    declare_parameter("goal_y", 0.);
+    return Vector2d(
+      get_parameter("goal_x").as_double(),
+      get_parameter("goal_y").as_double()
+    );
+  }
+  EstimationParams get_estimation_params_() {
+    declare_parameter("est_params.max_dist_diff", 0.2);
+    declare_parameter("est_params.agent_width", 0.4);
+    declare_parameter("est_params.max_position_dist_diff", 0.2);
+    double max_dist_diff = get_parameter("est_params.max_dist_diff").as_double();
+    double agent_width = get_parameter("est_params.agent_width").as_double();
+    double max_position_dist_diff = get_parameter("est_params.max_position_dist_diff").as_double();
+    return EstimationParams{
+      .max_lidar_dist_diff = max_dist_diff,
+      .agent_width = agent_width,
+      .max_position_dist_diff = max_position_dist_diff
+    };
+  }
+  SmoothParams get_smooth_params_() {
+    declare_parameter("smooth_params.weights", std::vector<double>{1.0, 1.0, 1.0, 1.0, 1.0});
+    std::vector<double> vel_weights = get_parameter("smooth_params.weights").as_double_array();
+    return SmoothParams{
+      .weights = vel_weights
+    };
+  }
+  PredictParams get_predict_params_() {
+    declare_parameter("predict_params.ahead_time", 0.5);
+    declare_parameter("predict_params.time_resolution", 0.5);
+    declare_parameter("predict_params.min_speed", 0.5);
+    declare_parameter("predict_params.max_speed", 0.5);
+    declare_parameter("predict_params.preferred_speed", 0.5);
+    declare_parameter("predict_params.speed_resolution", 0.5);
+    declare_parameter("predict_params.max_angular_vel_deg", 0.5);
+    declare_parameter("predict_params.angular_vel_resolution_deg", 0.5);
+    declare_parameter("predict_params.dist_cost", 1.);
+    declare_parameter("predict_params.away_from_goal_cost", 0.5);
+    declare_parameter("predict_params.diff_from_prev_output_cost", 0.5);
+    declare_parameter("predict_params.diff_from_preferred_speed_cost", 0.5);
+    return PredictParams{
+      .ahead_time = get_parameter("predict_params.ahead_time").as_double(),
+      .time_resolution = get_parameter("predict_params.time_resolution").as_double(),
+      .min_speed = get_parameter("predict_params.min_speed").as_double(),
+      .max_speed = get_parameter("predict_params.max_speed").as_double(),
+      .preferred_speed = get_parameter("predict_params.preferred_speed").as_double(),
+      .speed_resolution = get_parameter("predict_params.speed_resolution").as_double(),
+      .max_angular_vel = DEG2RAD(get_parameter("predict_params.max_angular_vel_deg").as_double()),
+      .angular_vel_resolution = DEG2RAD(get_parameter("predict_params.angular_vel_resolution_deg").as_double()),
+      .dist_cost = get_parameter("predict_params.dist_cost").as_double(),
+      .away_from_goal_cost = get_parameter("predict_params.away_from_goal_cost").as_double(),
+      .diff_from_prev_output_cost = get_parameter("predict_params.diff_from_prev_output_cost").as_double(),
+      .diff_from_preferred_speed_cost = get_parameter("predict_params.diff_from_preferred_speed_cost").as_double()
+    };
   }
 };
 

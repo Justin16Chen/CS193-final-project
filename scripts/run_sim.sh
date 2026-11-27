@@ -17,4 +17,10 @@ fi
 # shellcheck disable=SC1091
 source install/setup.bash
 
+# Only has an effect on a sanitizer build (build_sim.sh --asan). Leak detection
+# is off because rclcpp's shutdown path reports leaks that are not ours; the
+# sanitizer report goes to stderr, under the [controller-N] launch prefix.
+export ASAN_OPTIONS="${ASAN_OPTIONS:-detect_leaks=0}"
+export UBSAN_OPTIONS="${UBSAN_OPTIONS:-print_stacktrace=1}"
+
 exec ros2 launch crowd_sim sim.launch.py

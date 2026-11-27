@@ -10,4 +10,4 @@ world:
   y_max: 15.0
   wall_thickness: 0.2
   wall_height: 3.0
-  build_test_person: false
+  build_test_person: true

@@ -157,16 +157,16 @@ shared_ptr<SetEntityPose::Request> make_set_pose_request(const Agent& agent) {
 void change_agent_goal(SpawnData spawn_data, Agent& agent) {
   double goal_rand = (double) rand() / RAND_MAX;
   // swap left to right and right to left
-  if (ABS(agent.goal.x() - spawn_data.spawn_x_min) < kEpsilon) {
+  if (std::abs(agent.goal.x() - spawn_data.spawn_x_min) < kEpsilon) {
     agent.goal.x() = spawn_data.spawn_x_max;
     agent.goal.y() = goal_rand * (spawn_data.spawn_y_max - spawn_data.spawn_y_min) + spawn_data.spawn_y_min;
   }
-  else if (ABS(agent.goal.x() - spawn_data.spawn_x_max) < kEpsilon) {
+  else if (std::abs(agent.goal.x() - spawn_data.spawn_x_max) < kEpsilon) {
     agent.goal.x() = spawn_data.spawn_x_min;
     agent.goal.y() = goal_rand * (spawn_data.spawn_y_max - spawn_data.spawn_y_min) + spawn_data.spawn_y_min;
   }
   // swap top to bottom and bottom to top
-  else if (ABS(agent.goal.y() - spawn_data.spawn_y_min) < kEpsilon) {
+  else if (std::abs(agent.goal.y() - spawn_data.spawn_y_min) < kEpsilon) {
     agent.goal.x() = goal_rand * (spawn_data.spawn_x_max - spawn_data.spawn_x_min) + spawn_data.spawn_x_min;
     agent.goal.y() = spawn_data.spawn_y_max;
   }
@@ -229,7 +229,7 @@ void update_agents(SpawnData spawn_data, AgentData data, std::vector<Agent>& age
       // sidestep direction: 2D cross product, +lat means neighbor is on the left -> steer right (f < 0 flips)
       double lat = heading.x() * a_to_b_hat.y() - heading.y() * a_to_b_hat.x();
       double f = std::clamp(-lat / data.sidestep_lat_scale, -1.0, 1.0);
-      f += (1.0 - ABS(f)) * data.sidestep_bias;  // fill the dead-ahead tie with the bias
+      f += (1.0 - std::abs(f)) * data.sidestep_bias;  // fill the dead-ahead tie with the bias
 
       Vector2d sidestep = data.sidestep * headon * f * right;
       agent_repulsion_accel += avoid_accel_mag * anisotropy * (-a_to_b_hat + sidestep);
@@ -245,7 +245,7 @@ void update_agents(SpawnData spawn_data, AgentData data, std::vector<Agent>& age
     a.vel += accels[i] * dt;
     double mag = a.vel.norm();
     double new_mag = std::clamp(mag, data.min_walk_speed, data.max_walk_speed);
-    if (ABS(new_mag - mag) > 0.0001) {
+    if (std::abs(new_mag - mag) > 0.0001) {
       a.vel = a.vel.normalized() * new_mag;
     }
     a.pos += a.vel * dt;

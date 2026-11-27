@@ -89,9 +89,9 @@ std::vector<Vector2d> estimate_agent_positions(const LaserScan& scan,
       start_idx = i;
       continue;
     }
-    double delta_dist = ABS(dist - prev_dist);
+    double delta_dist = std::abs(dist - prev_dist);
     double delta_dist_per_angle = delta_dist / scan.angle_increment;
-    if (num == 0 && ABS(i - scan.ranges.size() * 0.5) < 10) {
+    if (num == 0 && std::abs(i - scan.ranges.size() * 0.5) < 10) {
       RCLCPP_INFO(rclcpp::get_logger("est_agent_pos"),
         "dist: %.5lf | delta dist: %.5lf | delta angle: %.5lf | delta dist / delta angle: %.5lf",
         dist, delta_dist, scan.angle_increment, delta_dist_per_angle);

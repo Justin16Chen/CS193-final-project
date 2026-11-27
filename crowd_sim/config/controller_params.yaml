@@ -3,6 +3,8 @@ controller:
     start_x: -5.5
     start_y: 0.
     start_yaw: 0.
+    goal_x: 5.5
+    goal_y: 1.
 
     est_params:
       max_dist_diff: 3.5
@@ -14,3 +16,17 @@ controller:
       num_prev_vels: 13
       # one weight per past estimate, oldest first, newest last; must have num_prev_vels entries
       weights: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.1, 0.1, 0.1, 0.15, 0.15]
+
+    predict_params:
+      ahead_time: 0.5
+      time_resolution: 0.1
+      min_speed: 0.1
+      max_speed: 1.5
+      preferred_speed: 1.2
+      speed_resolution: 0.1
+      max_angular_vel_deg: 40.
+      angular_vel_resolution_deg: 2.
+      dist_cost: 2.
+      away_from_goal_cost: 0.2
+      diff_from_prev_output_cost: 0.025
+      diff_from_preferred_speed_cost: 0.1
