@@ -20,18 +20,15 @@ vec2d_list get_future_positions(const vec2d_list& positions, const vec2d_list& v
 
 Vector2d get_future_robot_position(Vector2d robot_position, double robot_heading, OutputInfo output_info) {
   Vector2d local_displacement;
+  double linear_distance = output_info.speed * output_info.time;
   if (std::abs(output_info.ang_vel) < 0.00001) { // practically a straight line
-    local_displacement = Vector2d(output_info.speed * output_info.time, 0);
+    local_displacement = Vector2d(linear_distance, 0);
   }
   else {
-    double radius_of_curvature = output_info.speed / output_info.ang_vel;
-    double angle_traveled = calculate_angle_traveled(output_info);
-    if (angle_traveled >= 0) 
-      local_displacement = (Vector2d(cos(angle_traveled), sin(angle_traveled)) - Vector2d(1, 0)) * radius_of_curvature;
-    else {
-      angle_traveled += M_PI;
-      local_displacement = (Vector2d(cos(angle_traveled), sin(angle_traveled)) - Vector2d(-1, 0)) * radius_of_curvature;
-    }
+    // if ang_vel is negative, this will be negative
+    double radius = output_info.speed / output_info.ang_vel;
+    double angle_traveled = linear_distance / radius;
+    local_displacement = Vector2d(radius * sin(angle_traveled), radius * (1 - cos(angle_traveled)));
   }
   return Eigen::Rotation2Dd(robot_heading) * local_displacement + robot_position;
 }
@@ -42,7 +39,12 @@ double calculate_dist_cost(PredictParams predict_params, const vec2d_list& posit
   }
   double total = 0;
   for (Vector2d position : positions) {
-    total += (position - robot_position).squaredNorm();
+    double squared_norm = (position - robot_position).squaredNorm();
+    if (squared_norm <= predict_params.ignore_dist_threshold_squared) 
+      total += squared_norm;
+  }
+  if (total < 0.00001) {
+    return 0;
   }
   return predict_params.dist_cost / total;
 }
@@ -61,6 +63,8 @@ double calculate_away_from_goal_cost(PredictParams predict_params, Vector2d robo
 }
 
 double calculate_diff_from_prev_output_cost(PredictParams predict_params, OutputInfo cur_output, OutputInfo prev_output) {
+  if (predict_params.diff_from_prev_output_cost < 0.0001)
+    return 0;
   double prev_angle_traveled = calculate_angle_traveled(prev_output);
   double cur_angle_traveled = calculate_angle_traveled(cur_output);
   Vector2d prev_vel = Vector2d(cos(prev_angle_traveled), sin(prev_angle_traveled)) * prev_output.speed;

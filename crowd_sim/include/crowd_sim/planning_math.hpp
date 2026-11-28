@@ -7,9 +7,10 @@
 using Eigen::Vector2d;
 
 // define helpers
-#define NUM_TIMES(predict) ((int)((predict).ahead_time / (predict).time_resolution + 1))
-#define NUM_SPEEDS(predict) ((int)((predict.max_speed - predict.min_speed) / predict.speed_resolution + 1))
-#define NUM_ANGULAR_VELS(predict) ((int)(2 * predict.max_angular_vel / predict.angular_vel_resolution + 1))
+#define EPSILON (1e-9)
+#define NUM_TIMES(predict) (int)(((predict).ahead_time + EPSILON) / (predict).time_resolution + 1)
+#define NUM_SPEEDS(predict) (int)((predict.max_speed - predict.min_speed + EPSILON) / predict.speed_resolution + 1)
+#define NUM_ANGULAR_VELS(predict) (int)((2 * predict.max_angular_vel + EPSILON) / predict.angular_vel_resolution + 1)
 #define IDX_TO_SPEED(predict, idx) ((predict).min_speed + (idx) * (predict.speed_resolution))
 #define IDX_TO_ANGULAR_VEL(predict, idx) (((idx) - (NUM_ANGULAR_VELS(predict) / 2)) * (predict).angular_vel_resolution)
 #define IDX_TO_TIME(predict, idx) ((idx) * (predict).time_resolution)
@@ -23,6 +24,7 @@ struct PredictParams {
   double max_angular_vel;
   double angular_vel_resolution;
 
+  double ignore_dist_threshold_squared;
   double dist_cost;
   double away_from_goal_cost;
   double diff_from_prev_output_cost;

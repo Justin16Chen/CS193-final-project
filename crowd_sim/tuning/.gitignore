@@ -1,0 +1,3 @@
+# Cost-grid snapshots from scripts/plot_costs.py. Keep the folder, not the images.
+*.png
+!.gitignore

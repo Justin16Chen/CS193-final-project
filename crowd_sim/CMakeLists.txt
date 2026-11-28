@@ -21,6 +21,7 @@ find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(crowd_interfaces REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(ros_gz_interfaces REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(tf2 REQUIRED)
@@ -51,7 +52,7 @@ endif()
 add_executable(controller src/controller.cpp src/rviz_helper.cpp src/lidar.cpp src/path_planning.cpp src/planning_math.cpp)
 ament_target_dependencies(controller
   rclcpp
-  sensor_msgs geometry_msgs visualization_msgs nav_msgs geometry_msgs
+  sensor_msgs geometry_msgs visualization_msgs nav_msgs crowd_interfaces std_srvs
   tf2 tf2_geometry_msgs)
 target_link_libraries(controller Eigen3::Eigen)
 target_include_directories(controller PRIVATE include)

@@ -15,6 +15,7 @@ PredictParams default_params() {
     .speed_resolution = 0.1,
     .max_angular_vel = DEG2RAD(40.0),
     .angular_vel_resolution = DEG2RAD(5.0),
+    .ignore_dist_threshold_squared = 4.,
     .dist_cost = 2.,
     .away_from_goal_cost = 0.2,
     .diff_from_prev_output_cost = 0.05,

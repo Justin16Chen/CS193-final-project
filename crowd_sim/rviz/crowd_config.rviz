@@ -57,7 +57,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        {}
+        people: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -93,7 +93,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        {}
+        est_positions: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -105,7 +105,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        {}
+        velocities: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -117,7 +117,7 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        lidar_position: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -130,7 +130,7 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        goal_position: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -151,6 +151,32 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /robot_heading
+      Value: true
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: Marker
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /ground_truth_lidar_position
+      Value: true
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: Marker
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /ground_truth_robot_heading
       Value: true
   Enabled: true
   Global Options:
@@ -234,5 +260,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1908
-  X: 1481
-  Y: 73
+  X: 1449
+  Y: 41

@@ -37,6 +37,7 @@ def generate_launch_description():
           '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
           '/lidar@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
           '/model/robot/odometry@nav_msgs/msg/Odometry[gz.msgs.Odometry',
+          '/model/robot/ground_truth@nav_msgs/msg/Odometry[gz.msgs.Odometry',
           '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',
           '/world/crowd_world/create@ros_gz_interfaces/srv/SpawnEntity',
           '/world/crowd_world/set_pose@ros_gz_interfaces/srv/SetEntityPose',

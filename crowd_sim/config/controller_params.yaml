@@ -5,6 +5,7 @@ controller:
     start_yaw: 0.
     goal_x: 5.5
     goal_y: 1.
+    goal_dist_threshold: 0.5
 
     est_params:
       max_dist_diff: 3.5
@@ -21,12 +22,13 @@ controller:
       ahead_time: 0.5
       time_resolution: 0.1
       min_speed: 0.1
-      max_speed: 1.5
-      preferred_speed: 1.2
+      max_speed: 1.9
+      preferred_speed: 1.6
       speed_resolution: 0.1
       max_angular_vel_deg: 40.
       angular_vel_resolution_deg: 2.
-      dist_cost: 1.5
-      away_from_goal_cost: 0.5
-      diff_from_prev_output_cost: 0.05
-      diff_from_preferred_speed_cost: 0.1
+      ignore_dist_threshold: 20.
+      dist_cost: 4.
+      away_from_goal_cost: 1.75
+      diff_from_prev_output_cost: 0.00
+      diff_from_preferred_speed_cost: 0.075
